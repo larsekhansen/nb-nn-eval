@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>nb-nn-eval · Playground</title>
+  <link rel="stylesheet" href="/ui/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>nb→nn playground</h1>
+    <nav>
+      <a href="/" class="active">Playground</a>
+      <a href="/eval">BLEU-evaluering</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>Velg modellar</h2>
+      <p class="muted">Modellane blir lasta første gong du brukar dei. Første gongs nedlasting kan ta eit par minutt.</p>
+      <div id="model-list" class="model-list">Lastar…</div>
+    </section>
+
+    <section class="card">
+      <h2>Input (bokmål)</h2>
+      <textarea id="input" rows="8" placeholder="Lim inn bokmål-tekst her…">Kunstig intelligens er i ferd med å forandre måten vi arbeider på i offentlig sektor. Digitaliseringsdirektoratet ønsker å hjelpe statlige og kommunale virksomheter med å ta i bruk KI på en trygg og ansvarlig måte.</textarea>
+      <div class="row">
+        <button id="translate-btn" class="primary">Oversett</button>
+        <button id="clear-btn">Tøm</button>
+        <span id="status" class="muted"></span>
+      </div>
+    </section>
+
+    <section id="results-section" class="card" hidden>
+      <h2>Resultat (nynorsk)</h2>
+      <div id="results"></div>
+    </section>
+
+    <section class="card">
+      <h2>Hent parallell-artikkel frå Wikipedia</h2>
+      <p class="muted">Søk opp ein bokmål-artikkel, finn den tilsvarande nynorsk-versjonen, og bruk han til evaluering.</p>
+      <div class="row">
+        <input type="text" id="wiki-search" placeholder="Søk nb.wikipedia.org…" />
+        <button id="wiki-search-btn">Søk</button>
+      </div>
+      <div id="wiki-results"></div>
+    </section>
+  </main>
+
+  <script src="/ui/app.js"></script>
+</body>
+</html>

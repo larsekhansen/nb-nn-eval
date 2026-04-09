@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>nb-nn-eval · BLEU</title>
+  <link rel="stylesheet" href="/ui/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>BLEU-evaluering</h1>
+    <nav>
+      <a href="/">Playground</a>
+      <a href="/eval" class="active">BLEU-evaluering</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>1. Vel modellar</h2>
+      <div id="model-list" class="model-list">Lastar…</div>
+    </section>
+
+    <section class="card">
+      <h2>2. Last inn parallell-korpus</h2>
+      <p class="muted">
+        Kvar rad er eit par: bokmål + menneskeleg skriven nynorsk-referanse.
+        Du kan fylle lista via Wikipedia-søk, lime inn TSV, eller taste inn manuelt.
+      </p>
+
+      <div class="row">
+        <input type="text" id="wiki-search" placeholder="Søk nb.wikipedia.org…" />
+        <button id="wiki-search-btn">Søk</button>
+      </div>
+      <div id="wiki-results"></div>
+
+      <details style="margin-top: 1rem">
+        <summary>Eller lim inn TSV (nb [TAB] nn, ein per rad)</summary>
+        <textarea id="tsv-input" rows="6" placeholder="Dette er ein setning.&#9;Dette er ei setning.&#10;…"></textarea>
+        <button id="tsv-load">Last inn TSV</button>
+      </details>
+
+      <div id="pair-editor" class="pair-editor">
+        <div class="muted">Ingen par lagt til enno.</div>
+      </div>
+      <div class="row">
+        <button id="add-pair">+ Legg til eit par</button>
+        <button id="clear-pairs">Tøm lista</button>
+        <span id="pair-count" class="muted"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3. Kjør evaluering</h2>
+      <div class="row">
+        <button id="run-btn" class="primary">Kjør BLEU</button>
+        <span id="run-status" class="muted"></span>
+      </div>
+    </section>
+
+    <section id="results-section" class="card" hidden>
+      <h2>Resultat</h2>
+      <div id="corpus-results"></div>
+      <details>
+        <summary>Per-setning-detaljar</summary>
+        <div id="segment-results"></div>
+      </details>
+    </section>
+  </main>
+
+  <script src="/ui/eval.js"></script>
+</body>
+</html>
