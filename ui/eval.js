@@ -584,5 +584,11 @@ function checkForCheckpoint() {
 
 loadModels();
 renderPairs();
-loadSavedCorpora();
+loadSavedCorpora().then(() => {
+  // Auto-select first corpus (kuratert-30) on fresh load.
+  if (pairs.length === 0) {
+    const first = document.querySelector('.corpus-chip');
+    if (first) first.click();
+  }
+});
 checkForCheckpoint();
