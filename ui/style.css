@@ -379,6 +379,34 @@ button:disabled {
   font-weight: 500;
 }
 
+.corpus-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.corpus-chip {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.corpus-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.corpus-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
 .source-group {
   margin-top: 1rem;
 }

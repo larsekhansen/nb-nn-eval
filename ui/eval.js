@@ -492,46 +492,48 @@ function renderCharts(valid, showVariance) {
   });
 }
 
-// ── Corpus save/load ──────────────────────────────────────────
+// ── Corpus picker ─────────────────────────────────────────────
+let activeCorpus = null;
+
 async function loadSavedCorpora() {
-  const wrap = $('saved-corpora');
+  const wrap = $('corpus-picker');
   try {
     const res = await fetch('/api/corpora');
     const list = await res.json();
     if (!list.length) {
-      wrap.innerHTML = '<span class="muted">Ingen lagra korpus enno.</span>';
+      wrap.innerHTML = '<span class="muted">Ingen korpus tilgjengelege.</span>';
       return;
     }
     wrap.innerHTML = '';
     for (const c of list) {
-      const row = document.createElement('div');
-      row.className = 'wiki-result';
-      row.innerHTML = `
-        <span>
-          <span class="title">${escape(c.name)}</span>
-          <span class="muted" style="margin-left: 0.5rem">${c.pairs} par${c.source ? ' · ' + escape(c.source) : ''}</span>
-        </span>
-        <button data-name="${c.name.replace(/"/g, '&quot;')}">Last inn</button>
-      `;
-      row.querySelector('button').addEventListener('click', async (e) => {
-        e.target.disabled = true;
-        e.target.textContent = 'Lastar…';
-        const r = await fetch('/api/corpora/load?name=' + encodeURIComponent(c.name));
-        const d = await r.json();
-        if (d.pairs) {
-          pairs = d.pairs.map((p) => ({ nb: p.nb || p[0] || '', nn: p.nn || p[1] || '' }));
-          renderPairs();
-          $('run-status').textContent = `Lasta inn "${c.name}" (${pairs.length} par)`;
-          $('corpus-name').value = c.name;
-        }
-        e.target.disabled = false;
-        e.target.textContent = 'Last inn';
-      });
-      wrap.appendChild(row);
+      const btn = document.createElement('button');
+      btn.className = 'corpus-chip' + (activeCorpus === c.name ? ' active' : '');
+      btn.textContent = `${c.name} (${c.pairs})`;
+      btn.title = c.description || c.source || '';
+      btn.addEventListener('click', () => selectCorpus(c.name, btn));
+      wrap.appendChild(btn);
     }
   } catch (err) {
-    wrap.innerHTML = '<span class="muted">Feil ved lasting av korpus.</span>';
+    wrap.innerHTML = '<span class="muted">Feil ved lasting.</span>';
   }
+}
+
+async function selectCorpus(name, btn) {
+  // Deselect others.
+  document.querySelectorAll('.corpus-chip').forEach((b) => b.classList.remove('active'));
+  btn.classList.add('active');
+  btn.textContent = 'Lastar…';
+
+  const r = await fetch('/api/corpora/load?name=' + encodeURIComponent(name));
+  const d = await r.json();
+  if (d.pairs) {
+    pairs = d.pairs.map((p) => ({ nb: p.nb || p[0] || '', nn: p.nn || p[1] || '' }));
+    activeCorpus = name;
+    renderPairs();
+    $('active-corpus-name').textContent = `— ${name} (${pairs.length} par)`;
+    $('corpus-name').value = name;
+  }
+  btn.textContent = `${name} (${d.pairs ? d.pairs.length : '?'})`;
 }
 
 async function saveCorpus() {

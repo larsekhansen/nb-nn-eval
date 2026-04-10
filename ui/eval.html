@@ -28,44 +28,41 @@
     </section>
 
     <section class="card">
-      <h2>2. Last inn parallell-korpus</h2>
-      <p class="muted">
-        Kvar rad er eit par: bokmål + menneskeleg skriven nynorsk-referanse.
-        Du kan fylle lista via lagra korpus, Wikipedia-søk, TSV, eller manuell inntasting.
-      </p>
+      <h2>2. Korpus <span id="active-corpus-name" class="muted" style="font-weight: 400; font-size: 0.9rem"></span></h2>
+      <div id="corpus-picker" class="corpus-picker">Lastar…</div>
 
-      <div class="source-group">
-        <h3>Lagra korpus</h3>
-        <div id="saved-corpora" class="muted">Lastar…</div>
-      </div>
+      <details id="corpus-advanced" style="margin-top: 0.75rem">
+        <summary class="muted">Legg til eigne par, Wikipedia, eller TSV…</summary>
 
-      <div class="source-group">
-        <h3>Wikipedia</h3>
-        <div class="row">
-          <input type="text" id="wiki-search" placeholder="Søk nb.wikipedia.org…" />
-          <button id="wiki-search-btn">Søk</button>
+        <div class="source-group" style="margin-top: 0.75rem">
+          <h3>Wikipedia</h3>
+          <div class="row">
+            <input type="text" id="wiki-search" placeholder="Søk nb.wikipedia.org…" />
+            <button id="wiki-search-btn">Søk</button>
+          </div>
+          <div id="wiki-results"></div>
         </div>
-        <div id="wiki-results"></div>
-      </div>
 
-      <details style="margin-top: 1rem">
-        <summary>Lim inn TSV (nb [TAB] nn, ein per rad)</summary>
-        <textarea id="tsv-input" rows="6" placeholder="Dette er ein setning.&#9;Dette er ei setning.&#10;…"></textarea>
-        <button id="tsv-load">Last inn TSV</button>
+        <details style="margin-top: 0.75rem">
+          <summary class="muted">Lim inn TSV (nb [TAB] nn, ein per rad)</summary>
+          <textarea id="tsv-input" rows="6" placeholder="Dette er ein setning.&#9;Dette er ei setning.&#10;…"></textarea>
+          <button id="tsv-load">Last inn TSV</button>
+        </details>
+
+        <div id="pair-editor" class="pair-editor">
+          <div class="muted">Ingen par lagt til enno.</div>
+        </div>
+        <div class="row">
+          <button id="add-pair">+ Legg til eit par</button>
+          <button id="clear-pairs">Tøm lista</button>
+          <span id="pair-count" class="muted"></span>
+        </div>
+        <div class="row">
+          <input type="text" id="corpus-name" placeholder="Namn på korpus…" style="max-width: 300px" />
+          <button id="save-corpus-btn">Lagre korpus</button>
+        </div>
       </details>
-
-      <div id="pair-editor" class="pair-editor">
-        <div class="muted">Ingen par lagt til enno.</div>
-      </div>
-      <div class="row">
-        <button id="add-pair">+ Legg til eit par</button>
-        <button id="clear-pairs">Tøm lista</button>
-        <span id="pair-count" class="muted"></span>
-      </div>
-      <div class="row">
-        <input type="text" id="corpus-name" placeholder="Namn på korpus…" style="max-width: 300px" />
-        <button id="save-corpus-btn">Lagre korpus</button>
-      </div>
+      <div id="saved-corpora" hidden></div>
     </section>
 
     <section class="card">
