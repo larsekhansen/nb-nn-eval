@@ -133,18 +133,43 @@ async function runEval() {
   const totalSteps = numRuns * modelKeys.length;
 
   $('run-btn').disabled = true;
+  $('resume-btn').hidden = true;
   $('results-section').hidden = false;
   $('corpus-results').innerHTML = '<div class="muted">Ventar…</div>';
   $('segment-results').innerHTML = '';
 
-  // allRuns[modelKey] = [{corpus, segments, elapsed_ms}, ...]
-  const allRuns = {};
-  for (const k of modelKeys) allRuns[k] = [];
+  // Check for a checkpoint to resume from.
+  const checkpoint = loadCheckpoint();
+  let allRuns;
+  let step;
+  let startRun;
+  let startModelIdx;
 
-  let step = 0;
+  if (checkpoint
+    && checkpoint.numRuns === numRuns
+    && JSON.stringify(checkpoint.modelKeys) === JSON.stringify(modelKeys)
+    && checkpoint.pairsCount === validPairs.length
+    && confirm(`Fann avbroten køyring (${checkpoint.completedSteps}/${checkpoint.totalSteps} steg fullførte). Fortsetje?`)
+  ) {
+    allRuns = checkpoint.allRuns;
+    step = checkpoint.completedSteps;
+    startRun = checkpoint.nextRun;
+    startModelIdx = checkpoint.nextModelIdx;
+    $('run-status').textContent = `Fortset frå steg ${step + 1}/${totalSteps}…`;
+  } else {
+    allRuns = {};
+    for (const k of modelKeys) allRuns[k] = [];
+    step = 0;
+    startRun = 0;
+    startModelIdx = 0;
+    clearCheckpoint();
+  }
+
   try {
-    for (let run = 0; run < numRuns; run++) {
-      for (const key of modelKeys) {
+    for (let run = startRun; run < numRuns; run++) {
+      const mStart = (run === startRun) ? startModelIdx : 0;
+      for (let mi = mStart; mi < modelKeys.length; mi++) {
+        const key = modelKeys[mi];
         step++;
         const label = numRuns > 1
           ? `Køyring ${run + 1}/${numRuns}, modell ${key} (${step}/${totalSteps})…`
@@ -152,7 +177,6 @@ async function runEval() {
         $('run-status').textContent = label;
         setProgress(Math.round((step / totalSteps) * 100), label);
 
-        // Run one model at a time for cleaner progress.
         const res = await fetch('/api/bleu', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -163,8 +187,22 @@ async function runEval() {
 
         const r = data.results[0];
         allRuns[key].push(r);
+
+        // Save checkpoint after each model so we can resume.
+        saveCheckpoint({
+          allRuns,
+          numRuns,
+          modelKeys,
+          pairsCount: validPairs.length,
+          totalSteps,
+          completedSteps: step,
+          nextRun: (mi + 1 >= modelKeys.length) ? run + 1 : run,
+          nextModelIdx: (mi + 1 >= modelKeys.length) ? 0 : mi + 1,
+        });
       }
     }
+
+    clearCheckpoint();
 
     const summary = buildSummary(allRuns, numRuns);
     renderResults(summary, numRuns);
@@ -193,12 +231,39 @@ async function runEval() {
       $('run-status').textContent = 'Ferdig!';
     }
   } catch (err) {
-    $('run-status').textContent = 'Feil: ' + err.message;
-    $('corpus-results').innerHTML = '';
+    $('run-status').textContent = `Avbroten: ${err.message}. Framgangen er lagra — du kan fortsetje seinare.`;
+    // Show partial results if we have any.
+    const completedModels = Object.entries(allRuns).filter(([_, runs]) => runs.length > 0);
+    if (completedModels.length > 0) {
+      const partial = buildSummary(allRuns, numRuns);
+      renderResults(partial, numRuns);
+    }
+    $('resume-btn').hidden = false;
   } finally {
     $('run-btn').disabled = false;
     $('progress-bar').hidden = true;
   }
+}
+
+// ── Checkpoint (localStorage) ─────────────────────────────────
+const CHECKPOINT_KEY = 'nb-nn-eval-checkpoint';
+
+function saveCheckpoint(data) {
+  try {
+    localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(data));
+  } catch { /* localStorage full or unavailable */ }
+}
+
+function loadCheckpoint() {
+  try {
+    const raw = localStorage.getItem(CHECKPOINT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function clearCheckpoint() {
+  try { localStorage.removeItem(CHECKPOINT_KEY); } catch {}
+  $('resume-btn').hidden = true;
 }
 
 function buildSummary(allRuns, numRuns) {
@@ -490,6 +555,7 @@ async function saveCorpus() {
 
 // ── Event listeners ───────────────────────────────────────────
 $('run-btn').addEventListener('click', runEval);
+$('resume-btn').addEventListener('click', runEval);  // runEval auto-detects checkpoint
 $('add-pair').addEventListener('click', () => { pairs.push({ nb: '', nn: '' }); renderPairs(); });
 $('clear-pairs').addEventListener('click', () => { pairs = []; renderPairs(); });
 $('wiki-search-btn').addEventListener('click', searchWiki);
@@ -505,6 +571,16 @@ $('select-none').addEventListener('click', () => {
   renderModels();
 });
 
+// Check for interrupted run on page load.
+function checkForCheckpoint() {
+  const cp = loadCheckpoint();
+  if (cp) {
+    $('resume-btn').hidden = false;
+    $('run-status').textContent = `Avbroten køyring funnen: ${cp.completedSteps}/${cp.totalSteps} steg fullførte. Trykk "Fortset" for å halde fram.`;
+  }
+}
+
 loadModels();
 renderPairs();
 loadSavedCorpora();
+checkForCheckpoint();
