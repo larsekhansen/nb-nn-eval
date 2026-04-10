@@ -389,7 +389,7 @@ $('wiki-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') sea
 $('tsv-load').addEventListener('click', loadTsv);
 $('save-corpus-btn').addEventListener('click', saveCorpus);
 $('select-all').addEventListener('click', () => {
-  models.forEach((m) => selected.add(m.key));
+  models.forEach((m) => { if (m.available) selected.add(m.key); });
   renderModels();
 });
 $('select-none').addEventListener('click', () => {
