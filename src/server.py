@@ -32,6 +32,7 @@ from src.sources import wikipedia  # noqa: E402
 
 PORT = int(os.environ.get("PORT", "5055"))
 UI_DIR = os.path.join(ROOT, "ui")
+CORPORA_DIR = os.path.join(ROOT, "corpora")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -65,6 +66,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._reply(200, {"nb_title": title, "nn_title": nn_title, "pairs": pairs})
             except Exception as e:
                 return self._reply(500, {"error": str(e)})
+        if path == "/api/corpora":
+            return self._list_corpora()
+        if path == "/api/corpora/load":
+            name = (query.get("name") or [""])[0]
+            if not name:
+                return self._reply(400, {"error": "Missing name"})
+            return self._load_corpus(name)
         return self._reply(404, {"error": f"Not found: {path}"})
 
     def do_POST(self):
@@ -89,6 +97,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not key:
                     return self._reply(400, {"error": "Missing model"})
                 return self._reply(200, {"unloaded": unload(key)})
+            if path == "/api/corpora/save":
+                return self._save_corpus(body)
             return self._reply(404, {"error": f"Not found: {path}"})
         except Exception as e:
             traceback.print_exc()
@@ -190,6 +200,53 @@ class Handler(BaseHTTPRequestHandler):
                 "elapsed_ms": int((time.time() - t0) * 1000),
             })
         return self._reply(200, {"results": results})
+
+    # ── Corpora ───────────────────────────────────────────────────
+    def _list_corpora(self):
+        os.makedirs(CORPORA_DIR, exist_ok=True)
+        files = sorted(f for f in os.listdir(CORPORA_DIR) if f.endswith(".json"))
+        corpora = []
+        for f in files:
+            try:
+                with open(os.path.join(CORPORA_DIR, f)) as fh:
+                    data = json.load(fh)
+                corpora.append({
+                    "name": f[:-5],  # strip .json
+                    "description": data.get("description", ""),
+                    "source": data.get("source", ""),
+                    "pairs": len(data.get("pairs", [])),
+                })
+            except Exception:
+                pass
+        return self._reply(200, corpora)
+
+    def _load_corpus(self, name: str):
+        safe = name.replace("/", "").replace("..", "")
+        path = os.path.join(CORPORA_DIR, f"{safe}.json")
+        if not os.path.exists(path):
+            return self._reply(404, {"error": f"Corpus '{name}' not found"})
+        with open(path) as f:
+            data = json.load(f)
+        return self._reply(200, data)
+
+    def _save_corpus(self, body: dict):
+        name = body.get("name", "").strip()
+        if not name:
+            return self._reply(400, {"error": "Missing name"})
+        safe = "".join(c for c in name if c.isalnum() or c in "-_ ").strip().replace(" ", "-")
+        if not safe:
+            return self._reply(400, {"error": "Invalid name"})
+        os.makedirs(CORPORA_DIR, exist_ok=True)
+        path = os.path.join(CORPORA_DIR, f"{safe}.json")
+        data = {
+            "name": name,
+            "description": body.get("description", ""),
+            "source": body.get("source", ""),
+            "pairs": body.get("pairs", []),
+        }
+        with open(path, "w") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        return self._reply(200, {"saved": safe, "pairs": len(data["pairs"])})
 
     # ── Plumbing ─────────────────────────────────────────────────
     def _serve_file(self, path: str, content_type: str):

@@ -28,14 +28,22 @@
         Du kan fylle lista via Wikipedia-søk, lime inn TSV, eller taste inn manuelt.
       </p>
 
-      <div class="row">
-        <input type="text" id="wiki-search" placeholder="Søk nb.wikipedia.org…" />
-        <button id="wiki-search-btn">Søk</button>
+      <div class="source-group">
+        <h3>Lagra korpus</h3>
+        <div id="saved-corpora" class="muted">Lastar…</div>
       </div>
-      <div id="wiki-results"></div>
+
+      <div class="source-group">
+        <h3>Wikipedia</h3>
+        <div class="row">
+          <input type="text" id="wiki-search" placeholder="Søk nb.wikipedia.org…" />
+          <button id="wiki-search-btn">Søk</button>
+        </div>
+        <div id="wiki-results"></div>
+      </div>
 
       <details style="margin-top: 1rem">
-        <summary>Eller lim inn TSV (nb [TAB] nn, ein per rad)</summary>
+        <summary>Lim inn TSV (nb [TAB] nn, ein per rad)</summary>
         <textarea id="tsv-input" rows="6" placeholder="Dette er ein setning.&#9;Dette er ei setning.&#10;…"></textarea>
         <button id="tsv-load">Last inn TSV</button>
       </details>
@@ -47,6 +55,10 @@
         <button id="add-pair">+ Legg til eit par</button>
         <button id="clear-pairs">Tøm lista</button>
         <span id="pair-count" class="muted"></span>
+      </div>
+      <div class="row">
+        <input type="text" id="corpus-name" placeholder="Namn på korpus…" style="max-width: 300px" />
+        <button id="save-corpus-btn">Lagre korpus</button>
       </div>
     </section>
 

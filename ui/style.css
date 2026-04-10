@@ -312,6 +312,18 @@ button:disabled {
   margin-top: 0.3rem;
 }
 
+.source-group {
+  margin-top: 1rem;
+}
+
+.source-group h3 {
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 0.5rem 0;
+}
+
 @media (max-width: 700px) {
   .pair { grid-template-columns: 1fr; }
   .topbar { flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 1rem 1.5rem; }

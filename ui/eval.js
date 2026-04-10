@@ -236,6 +236,73 @@ function renderResults(results) {
   }
 }
 
+// ── Corpus save/load ──────────────────────────────────────────
+async function loadSavedCorpora() {
+  const wrap = $('saved-corpora');
+  try {
+    const res = await fetch('/api/corpora');
+    const list = await res.json();
+    if (!list.length) {
+      wrap.innerHTML = '<span class="muted">Ingen lagra korpus enno.</span>';
+      return;
+    }
+    wrap.innerHTML = '';
+    for (const c of list) {
+      const row = document.createElement('div');
+      row.className = 'wiki-result';
+      row.innerHTML = `
+        <span>
+          <span class="title">${escape(c.name)}</span>
+          <span class="muted" style="margin-left: 0.5rem">${c.pairs} par${c.source ? ' · ' + escape(c.source) : ''}</span>
+        </span>
+        <button data-name="${c.name.replace(/"/g, '&quot;')}">Last inn</button>
+      `;
+      row.querySelector('button').addEventListener('click', async (e) => {
+        e.target.disabled = true;
+        e.target.textContent = 'Lastar…';
+        const r = await fetch('/api/corpora/load?name=' + encodeURIComponent(c.name));
+        const d = await r.json();
+        if (d.pairs) {
+          pairs = d.pairs.map((p) => ({ nb: p.nb || p[0] || '', nn: p.nn || p[1] || '' }));
+          renderPairs();
+          $('run-status').textContent = `Lasta inn "${c.name}" (${pairs.length} par)`;
+        }
+        e.target.disabled = false;
+        e.target.textContent = 'Last inn';
+      });
+      wrap.appendChild(row);
+    }
+  } catch (err) {
+    wrap.innerHTML = '<span class="muted">Feil ved lasting av korpus.</span>';
+  }
+}
+
+async function saveCorpus() {
+  const name = $('corpus-name').value.trim();
+  if (!name) {
+    $('run-status').textContent = 'Skriv inn eit namn for korpuset.';
+    return;
+  }
+  if (pairs.length === 0) {
+    $('run-status').textContent = 'Ingen par å lagre.';
+    return;
+  }
+  const validPairs = pairs.filter((p) => p.nb.trim() && p.nn.trim());
+  try {
+    const res = await fetch('/api/corpora/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, pairs: validPairs, source: 'manual' }),
+    });
+    const d = await res.json();
+    $('run-status').textContent = `Lagra "${d.saved}" (${d.pairs} par)`;
+    $('corpus-name').value = '';
+    loadSavedCorpora();
+  } catch (err) {
+    $('run-status').textContent = 'Feil ved lagring: ' + err.message;
+  }
+}
+
 $('run-btn').addEventListener('click', runEval);
 $('add-pair').addEventListener('click', () => {
   pairs.push({ nb: '', nn: '' });
@@ -250,6 +317,8 @@ $('wiki-search').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') searchWiki();
 });
 $('tsv-load').addEventListener('click', loadTsv);
+$('save-corpus-btn').addEventListener('click', saveCorpus);
 
 loadModels();
 renderPairs();
+loadSavedCorpora();

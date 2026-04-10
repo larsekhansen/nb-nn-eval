@@ -14,21 +14,54 @@ from .nllb import NLLB
 from .marian import Marian
 from .navjordj import NavjordjT5
 from .madlad import MADLAD
+from .pere import PereNbNn
+from .normistral import NorMistral
+from .apertium import Apertium
+from .llm_api import OpenAIModel, AnthropicModel
 
 
 # Key → factory. Factories are called lazily when the model is first used.
 # Add new models here. Keep keys short and stable — they're part of the URL.
 REGISTRY: Dict[str, Callable[[], Model]] = {
-    # NLLB family: native support for both nob_Latn and nno_Latn.
+    # ── Norwegian-specific translation models ────────────────────
+    # pere/nb-nn-translation — T5-base, most-downloaded nb→nn on HF.
+    # Uses tokenizer from pere/norwegian-t5-base-NCC-fast (the repo's
+    # own tokenizer files are broken LFS pointers).
+    "pere-nb-nn": lambda: PereNbNn(),
+    # navjordj T5 nb→nn (generally poor quality, kept for comparison).
+    "navjordj-t5": lambda: NavjordjT5("navjordj/t5_nb_nn"),
+    # Apertium rule-based nob→nno. Requires Docker:
+    #   docker run -d -p 2737:2737 apertium/apy
+    "apertium": lambda: Apertium(),
+
+    # ── Norwegian LLMs (generative, prompt-based) ────────────────
+    # NorMistral-11b-translate — UiO, fine-tuned for translation.
+    # Best on nynorsk grammar per Språkrådet 2025. ~22GB, slow on CPU.
+    "normistral-translate": lambda: NorMistral(
+        "norallm/normistral-11b-translate",
+        display="NorMistral 11B translate",
+    ),
+    # NorMistral-7b-instruct — smaller, faster for iterating.
+    "normistral-7b": lambda: NorMistral(
+        "norallm/normistral-7b-warm-instruct",
+        display="NorMistral 7B instruct",
+    ),
+
+    # ── Multilingual translation models ──────────────────────────
+    # NLLB family: native nob_Latn ↔ nno_Latn support.
     "nllb-600M": lambda: NLLB("facebook/nllb-200-distilled-600M"),
     "nllb-1.3B": lambda: NLLB("facebook/nllb-200-distilled-1.3B"),
     "nllb-3.3B": lambda: NLLB("facebook/nllb-200-3.3B"),
-    # Helsinki North Germanic Marian model (smallest, fastest).
+    # Helsinki North Germanic Marian (smallest, fastest).
     "marian-gmq": lambda: Marian("Helsinki-NLP/opus-mt-gmq-gmq", target_token=">>nno<<"),
-    # MADLAD-400 — Google multilingual (400+ languages). Large downloads.
+    # MADLAD-400 — Google multilingual (400+ languages). ~12GB.
     "madlad-3b": lambda: MADLAD("google/madlad400-3b-mt", target_lang="nn"),
-    # Norwegian-specific T5 baseline (generally poor, for comparison).
-    "navjordj-t5": lambda: NavjordjT5("navjordj/t5_nb_nn"),
+
+    # ── Closed-source / API models ───────────────────────────────
+    # Set API keys in .env at project root or as env vars.
+    "gpt-4o": lambda: OpenAIModel("gpt-4o"),
+    "gpt-4.1-mini": lambda: OpenAIModel("gpt-4.1-mini"),
+    "claude-sonnet": lambda: AnthropicModel("claude-sonnet-4-20250514"),
 }
 
 
