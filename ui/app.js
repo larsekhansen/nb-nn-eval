@@ -11,34 +11,7 @@ async function loadModels() {
   renderModels();
 }
 
-function renderModels() {
-  const wrap = $('model-list');
-  wrap.innerHTML = '';
-  for (const m of models) {
-    const card = document.createElement('div');
-    card.className = 'model-card' + (selected.has(m.key) ? ' selected' : '');
-    card.innerHTML = `
-      <label>
-        <input type="checkbox" ${selected.has(m.key) ? 'checked' : ''} data-key="${m.key}" />
-        <span class="key">${m.display_name}</span>
-        <span class="state ${m.loaded ? 'loaded' : 'unloaded'}">${m.loaded ? 'loaded' : 'not loaded'}</span>
-      </label>
-      <div class="detail">${m.hf_name || m.key}${m.param_count ? ' · ' + m.param_count : ''}</div>
-    `;
-    card.querySelector('input').addEventListener('change', (e) => {
-      const key = e.target.dataset.key;
-      if (e.target.checked) selected.add(key);
-      else selected.delete(key);
-      card.classList.toggle('selected', e.target.checked);
-    });
-    wrap.appendChild(card);
-  }
-  // Auto-select the first model on first load so users get a working setup.
-  if (selected.size === 0 && models.length) {
-    selected.add(models[0].key);
-    renderModels();
-  }
-}
+// renderModels() is provided by models-ui.js
 
 async function translate() {
   const text = $('input').value.trim();

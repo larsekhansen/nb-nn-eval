@@ -7,6 +7,7 @@ you only want to test one model.
 """
 from __future__ import annotations
 
+import os
 from typing import Callable, Dict, List
 
 from .base import Model
@@ -78,15 +79,60 @@ def get_model(key: str) -> Model:
     return _loaded[key]
 
 
+def _check_available(key: str) -> tuple:
+    """Lightweight check if a model can be loaded (without loading it).
+    Returns (available: bool, reason: str | None)."""
+    import urllib.request
+    if key in ("gpt-4o", "gpt-4.1-mini"):
+        if os.environ.get("OPENAI_API_KEY"):
+            return True, None
+        return False, "OPENAI_API_KEY mangler i .env"
+    if key == "claude-sonnet":
+        if os.environ.get("ANTHROPIC_API_KEY"):
+            return True, None
+        return False, "ANTHROPIC_API_KEY mangler i .env"
+    if key == "apertium":
+        url = os.environ.get("APERTIUM_URL", "http://localhost:2737")
+        try:
+            urllib.request.urlopen(f"{url}/listPairs", timeout=2)
+            return True, None
+        except Exception:
+            return False, "Apertium APY ikkje tilgjengeleg (docker run -d -p 2737:2737 apertium/apy)"
+    return True, None
+
+
+# Model display metadata (shown before loading).
+_META: Dict[str, dict] = {
+    "pere-nb-nn":             {"display_name": "Pere nb-nn (T5-base)", "group": "Norsk-spesifikke"},
+    "navjordj-t5":            {"display_name": "navjordj T5 nb-nn", "group": "Norsk-spesifikke"},
+    "apertium":               {"display_name": "Apertium (regelbasert)", "group": "Norsk-spesifikke"},
+    "normistral-translate":   {"display_name": "NorMistral 11B translate", "group": "Norske LLM-ar"},
+    "normistral-7b":          {"display_name": "NorMistral 7B instruct", "group": "Norske LLM-ar"},
+    "nllb-600M":              {"display_name": "NLLB 600M", "group": "Fleirspråklege"},
+    "nllb-1.3B":              {"display_name": "NLLB 1.3B", "group": "Fleirspråklege"},
+    "nllb-3.3B":              {"display_name": "NLLB 3.3B", "group": "Fleirspråklege"},
+    "marian-gmq":             {"display_name": "Marian gmq-gmq", "group": "Fleirspråklege"},
+    "madlad-3b":              {"display_name": "MADLAD-400 3B", "group": "Fleirspråklege"},
+    "gpt-4o":                 {"display_name": "GPT-4o", "group": "API (lukka kjeldekode)"},
+    "gpt-4.1-mini":           {"display_name": "GPT-4.1-mini", "group": "API (lukka kjeldekode)"},
+    "claude-sonnet":          {"display_name": "Claude Sonnet", "group": "API (lukka kjeldekode)"},
+}
+
+
 def list_models() -> List[dict]:
     """Return metadata about every registered model (loaded or not)."""
     out = []
     for key in REGISTRY:
         m = _loaded.get(key)
+        meta = _META.get(key, {})
+        available, reason = _check_available(key)
         out.append({
             "key": key,
             "loaded": m is not None,
-            "display_name": m.display_name if m else key,
+            "available": available,
+            "unavailable_reason": reason,
+            "display_name": m.display_name if m else meta.get("display_name", key),
+            "group": meta.get("group", ""),
             "hf_name": m.hf_name if m else None,
             "param_count": m.param_count if m else None,
         })

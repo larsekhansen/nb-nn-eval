@@ -184,6 +184,39 @@ button:disabled {
 
 .model-card .state.loaded { background: #dcfce7; color: var(--good); }
 .model-card .state.unloaded { background: #f1f5f9; color: var(--muted); }
+.model-card .state.unavailable { background: #fef2f2; color: var(--bad); }
+
+.model-card.unavailable {
+  opacity: 0.5;
+  cursor: default;
+  border-color: #e2e8f0;
+}
+
+.model-card.unavailable:hover { border-color: #e2e8f0; }
+.model-card.unavailable label { cursor: default; }
+
+.unavailable-hint {
+  font-style: italic;
+}
+
+.model-group {
+  margin-bottom: 1rem;
+}
+
+.model-group-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.4rem;
+}
+
+.model-group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.6rem;
+}
 
 .result-row {
   border: 1px solid var(--border);
