@@ -33,7 +33,7 @@ class NorMistral(Model):
         self.tokenizer = AutoTokenizer.from_pretrained(hf_name)
         self.model = AutoModelForCausalLM.from_pretrained(
             hf_name,
-            torch_dtype=torch.float32,
+            torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
         )
         self.model.eval()

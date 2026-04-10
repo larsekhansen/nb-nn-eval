@@ -36,13 +36,19 @@ function renderModels() {
         stateHtml = '<span class="state unloaded">ikkje lasta</span>';
       }
 
+      const sizeSpeed = [m.size, m.speed].filter(Boolean).join(' · ');
+      const warningHtml = m.warning ? `<div class="detail model-warning">${m.warning}</div>` : '';
+
       card.innerHTML = `
         <label>
           <input type="checkbox" ${selected.has(m.key) ? 'checked' : ''} ${disabled ? 'disabled' : ''} data-key="${m.key}" />
           <span class="key">${m.display_name}</span>
           ${stateHtml}
         </label>
-        ${disabled ? `<div class="detail unavailable-hint">${m.unavailable_reason || ''}</div>` : `<div class="detail">${m.hf_name || m.key}${m.param_count ? ' · ' + m.param_count : ''}</div>`}
+        ${disabled
+          ? `<div class="detail unavailable-hint">${m.unavailable_reason || ''}</div>`
+          : `<div class="detail">${sizeSpeed}${m.param_count ? ' · ' + m.param_count : ''}</div>${warningHtml}`
+        }
       `;
 
       if (!disabled) {

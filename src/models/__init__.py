@@ -103,19 +103,19 @@ def _check_available(key: str) -> tuple:
 
 # Model display metadata (shown before loading).
 _META: Dict[str, dict] = {
-    "pere-nb-nn":             {"display_name": "Pere nb-nn (T5-base)", "group": "Norsk-spesifikke"},
-    "navjordj-t5":            {"display_name": "navjordj T5 nb-nn", "group": "Norsk-spesifikke"},
-    "apertium":               {"display_name": "Apertium (regelbasert)", "group": "Norsk-spesifikke"},
-    "normistral-translate":   {"display_name": "NorMistral 11B translate", "group": "Norske LLM-ar"},
-    "normistral-7b":          {"display_name": "NorMistral 7B instruct", "group": "Norske LLM-ar"},
-    "nllb-600M":              {"display_name": "NLLB 600M", "group": "Fleirspråklege"},
-    "nllb-1.3B":              {"display_name": "NLLB 1.3B", "group": "Fleirspråklege"},
-    "nllb-3.3B":              {"display_name": "NLLB 3.3B", "group": "Fleirspråklege"},
-    "marian-gmq":             {"display_name": "Marian gmq-gmq", "group": "Fleirspråklege"},
-    "madlad-3b":              {"display_name": "MADLAD-400 3B", "group": "Fleirspråklege"},
-    "gpt-4o":                 {"display_name": "GPT-4o", "group": "API (lukka kjeldekode)"},
-    "gpt-4.1-mini":           {"display_name": "GPT-4.1-mini", "group": "API (lukka kjeldekode)"},
-    "claude-sonnet":          {"display_name": "Claude Sonnet", "group": "API (lukka kjeldekode)"},
+    "pere-nb-nn":             {"display_name": "Pere nb-nn (T5-base)", "group": "Norsk-spesifikke", "size": "~1 GB", "speed": "~0.5s/setning"},
+    "navjordj-t5":            {"display_name": "navjordj T5 nb-nn", "group": "Norsk-spesifikke", "size": "~2.4 GB", "speed": "~1s/setning"},
+    "apertium":               {"display_name": "Apertium (regelbasert)", "group": "Norsk-spesifikke", "size": "Docker", "speed": "~0.1s/setning"},
+    "normistral-translate":   {"display_name": "NorMistral 11B translate", "group": "Norske LLM-ar", "size": "~22 GB", "speed": "~30-60s/setning", "warning": "Stor modell — treg på CPU"},
+    "normistral-7b":          {"display_name": "NorMistral 7B instruct", "group": "Norske LLM-ar", "size": "~14 GB", "speed": "~15-30s/setning", "warning": "Stor modell — treg på CPU"},
+    "nllb-600M":              {"display_name": "NLLB 600M", "group": "Fleirspråklege", "size": "~2.4 GB", "speed": "~1s/setning"},
+    "nllb-1.3B":              {"display_name": "NLLB 1.3B", "group": "Fleirspråklege", "size": "~5 GB", "speed": "~3s/setning"},
+    "nllb-3.3B":              {"display_name": "NLLB 3.3B", "group": "Fleirspråklege", "size": "~13 GB", "speed": "~10s/setning"},
+    "marian-gmq":             {"display_name": "Marian gmq-gmq", "group": "Fleirspråklege", "size": "~300 MB", "speed": "~0.5s/setning"},
+    "madlad-3b":              {"display_name": "MADLAD-400 3B", "group": "Fleirspråklege", "size": "~12 GB", "speed": "~10s/setning"},
+    "gpt-4o":                 {"display_name": "GPT-4o", "group": "API (lukka kjeldekode)", "size": "API", "speed": "~1-2s/setning"},
+    "gpt-4.1-mini":           {"display_name": "GPT-4.1-mini", "group": "API (lukka kjeldekode)", "size": "API", "speed": "~0.5s/setning"},
+    "claude-sonnet":          {"display_name": "Claude Sonnet", "group": "API (lukka kjeldekode)", "size": "API", "speed": "~1-2s/setning"},
 }
 
 
@@ -135,6 +135,9 @@ def list_models() -> List[dict]:
             "group": meta.get("group", ""),
             "hf_name": m.hf_name if m else None,
             "param_count": m.param_count if m else None,
+            "size": meta.get("size", ""),
+            "speed": meta.get("speed", ""),
+            "warning": meta.get("warning", ""),
         })
     return out
 

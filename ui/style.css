@@ -199,6 +199,12 @@ button:disabled {
   font-style: italic;
 }
 
+.model-warning {
+  color: var(--warn);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
 .model-group {
   margin-bottom: 1rem;
 }
