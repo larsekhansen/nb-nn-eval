@@ -33,6 +33,7 @@ from src.sources import wikipedia  # noqa: E402
 PORT = int(os.environ.get("PORT", "5055"))
 UI_DIR = os.path.join(ROOT, "ui")
 CORPORA_DIR = os.path.join(ROOT, "corpora")
+RESULTS_DIR = os.path.join(ROOT, "results")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -73,6 +74,15 @@ class Handler(BaseHTTPRequestHandler):
             if not name:
                 return self._reply(400, {"error": "Missing name"})
             return self._load_corpus(name)
+        if path == "/api/results":
+            return self._list_results()
+        if path == "/api/results/load":
+            name = (query.get("name") or [""])[0]
+            if not name:
+                return self._reply(400, {"error": "Missing name"})
+            return self._load_result(name)
+        if path == "/results":
+            return self._serve_file(os.path.join(UI_DIR, "results.html"), "text/html; charset=utf-8")
         return self._reply(404, {"error": f"Not found: {path}"})
 
     def do_POST(self):
@@ -99,6 +109,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._reply(200, {"unloaded": unload(key)})
             if path == "/api/corpora/save":
                 return self._save_corpus(body)
+            if path == "/api/results/save":
+                return self._save_result(body)
+            if path == "/api/results/delete":
+                return self._delete_result(body)
             return self._reply(404, {"error": f"Not found: {path}"})
         except Exception as e:
             traceback.print_exc()
@@ -247,6 +261,61 @@ class Handler(BaseHTTPRequestHandler):
         with open(path, "w") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         return self._reply(200, {"saved": safe, "pairs": len(data["pairs"])})
+
+    # ── Results ───────────────────────────────────────────────────
+    def _list_results(self):
+        os.makedirs(RESULTS_DIR, exist_ok=True)
+        files = sorted(
+            (f for f in os.listdir(RESULTS_DIR) if f.endswith(".json")),
+            reverse=True,  # newest first (filenames are timestamped)
+        )
+        results = []
+        for f in files:
+            try:
+                with open(os.path.join(RESULTS_DIR, f)) as fh:
+                    data = json.load(fh)
+                results.append({
+                    "name": f[:-5],
+                    "label": data.get("label", ""),
+                    "corpus": data.get("corpus_name", ""),
+                    "models": [r.get("model") for r in data.get("results", []) if not r.get("error")],
+                    "runs": data.get("runs", 1),
+                    "timestamp": data.get("timestamp", ""),
+                })
+            except Exception:
+                pass
+        return self._reply(200, results)
+
+    def _load_result(self, name: str):
+        safe = name.replace("/", "").replace("..", "")
+        path = os.path.join(RESULTS_DIR, f"{safe}.json")
+        if not os.path.exists(path):
+            return self._reply(404, {"error": f"Result '{name}' not found"})
+        with open(path) as f:
+            data = json.load(f)
+        return self._reply(200, data)
+
+    def _save_result(self, body: dict):
+        os.makedirs(RESULTS_DIR, exist_ok=True)
+        import datetime
+        ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        label = body.get("label", "").strip()
+        safe_label = "".join(c for c in label if c.isalnum() or c in "-_ ").strip().replace(" ", "-") if label else ""
+        name = f"{ts}-{safe_label}" if safe_label else ts
+        path = os.path.join(RESULTS_DIR, f"{name}.json")
+        body["timestamp"] = ts
+        with open(path, "w") as f:
+            json.dump(body, f, ensure_ascii=False, indent=2)
+        return self._reply(200, {"saved": name})
+
+    def _delete_result(self, body: dict):
+        name = body.get("name", "")
+        safe = name.replace("/", "").replace("..", "")
+        path = os.path.join(RESULTS_DIR, f"{safe}.json")
+        if os.path.exists(path):
+            os.remove(path)
+            return self._reply(200, {"deleted": name})
+        return self._reply(404, {"error": f"Not found: {name}"})
 
     # ── Plumbing ─────────────────────────────────────────────────
     def _serve_file(self, path: str, content_type: str):

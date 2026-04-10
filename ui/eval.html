@@ -12,12 +12,17 @@
     <nav>
       <a href="/">Playground</a>
       <a href="/eval" class="active">BLEU-evaluering</a>
+      <a href="/results">Tidlegare resultat</a>
     </nav>
   </header>
 
   <main class="wrap">
     <section class="card">
       <h2>1. Vel modellar</h2>
+      <div class="row" style="margin-bottom: 0.5rem">
+        <button id="select-all">Vel alle</button>
+        <button id="select-none">Vel ingen</button>
+      </div>
       <div id="model-list" class="model-list">Lastar…</div>
     </section>
 
@@ -25,7 +30,7 @@
       <h2>2. Last inn parallell-korpus</h2>
       <p class="muted">
         Kvar rad er eit par: bokmål + menneskeleg skriven nynorsk-referanse.
-        Du kan fylle lista via Wikipedia-søk, lime inn TSV, eller taste inn manuelt.
+        Du kan fylle lista via lagra korpus, Wikipedia-søk, TSV, eller manuell inntasting.
       </p>
 
       <div class="source-group">
@@ -66,7 +71,22 @@
       <h2>3. Kjør evaluering</h2>
       <div class="row">
         <button id="run-btn" class="primary">Kjør BLEU</button>
+        <label style="display: flex; align-items: center; gap: 0.4rem">
+          <span>Køyringar:</span>
+          <input type="number" id="run-count" value="1" min="1" max="20" style="width: 60px" />
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.4rem">
+          <input type="checkbox" id="auto-save" checked />
+          <span>Lagre resultat automatisk</span>
+        </label>
+      </div>
+      <div class="row">
+        <input type="text" id="result-label" placeholder="Namn / merknad (valfritt)" style="max-width: 400px" />
         <span id="run-status" class="muted"></span>
+      </div>
+      <div id="progress-bar" class="progress-bar" hidden>
+        <div id="progress-fill" class="progress-fill"></div>
+        <span id="progress-text" class="progress-text"></span>
       </div>
     </section>
 

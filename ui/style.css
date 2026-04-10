@@ -312,6 +312,34 @@ button:disabled {
   margin-top: 0.3rem;
 }
 
+.progress-bar {
+  margin-top: 0.75rem;
+  height: 28px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+  border-radius: 6px;
+}
+
+.progress-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  line-height: 28px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
 .source-group {
   margin-top: 1rem;
 }

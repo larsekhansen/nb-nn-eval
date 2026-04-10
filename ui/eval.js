@@ -1,4 +1,5 @@
 // BLEU evaluator — compare many models against a human-written reference corpus.
+// Supports multi-run mode (run the same eval N times to measure variance).
 
 const $ = (id) => document.getElementById(id);
 
@@ -34,10 +35,6 @@ function renderModels() {
     });
     wrap.appendChild(card);
   }
-  if (selected.size === 0 && models.length) {
-    selected.add(models[0].key);
-    renderModels();
-  }
 }
 
 function renderPairs() {
@@ -58,9 +55,7 @@ function renderPairs() {
     `;
     row.querySelectorAll('textarea').forEach((t) => {
       t.addEventListener('input', (e) => {
-        const i = +e.target.dataset.i;
-        const f = e.target.dataset.field;
-        pairs[i][f] = e.target.value;
+        pairs[+e.target.dataset.i][e.target.dataset.field] = e.target.value;
       });
     });
     row.querySelector('.remove').addEventListener('click', (e) => {
@@ -137,8 +132,16 @@ function loadTsv() {
   $('tsv-input').value = '';
 }
 
+// ── Multi-run evaluation ──────────────────────────────────────
+function setProgress(pct, text) {
+  $('progress-bar').hidden = false;
+  $('progress-fill').style.width = pct + '%';
+  $('progress-text').textContent = text;
+}
+
 async function runEval() {
-  if (pairs.length === 0) {
+  const validPairs = pairs.filter((p) => p.nb.trim() && p.nn.trim());
+  if (validPairs.length === 0) {
     $('run-status').textContent = 'Legg til minst eitt par.';
     return;
   }
@@ -146,56 +149,154 @@ async function runEval() {
     $('run-status').textContent = 'Vel minst ein modell.';
     return;
   }
-  const validPairs = pairs.filter((p) => p.nb.trim() && p.nn.trim());
-  if (validPairs.length === 0) {
-    $('run-status').textContent = 'Ingen fullstendige par.';
-    return;
-  }
+
+  const numRuns = Math.max(1, Math.min(20, parseInt($('run-count').value) || 1));
+  const modelKeys = Array.from(selected);
+  const totalSteps = numRuns * modelKeys.length;
 
   $('run-btn').disabled = true;
-  $('run-status').textContent = `Køyrer ${validPairs.length} par × ${selected.size} modell(ar)…`;
   $('results-section').hidden = false;
   $('corpus-results').innerHTML = '<div class="muted">Ventar…</div>';
   $('segment-results').innerHTML = '';
 
+  // allRuns[modelKey] = [{corpus, segments, elapsed_ms}, ...]
+  const allRuns = {};
+  for (const k of modelKeys) allRuns[k] = [];
+
+  let step = 0;
   try {
-    const res = await fetch('/api/bleu', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pairs: validPairs, models: Array.from(selected) }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Feil');
-    renderResults(data.results);
+    for (let run = 0; run < numRuns; run++) {
+      for (const key of modelKeys) {
+        step++;
+        const label = numRuns > 1
+          ? `Køyring ${run + 1}/${numRuns}, modell ${key} (${step}/${totalSteps})…`
+          : `Modell ${key} (${step}/${totalSteps})…`;
+        $('run-status').textContent = label;
+        setProgress(Math.round((step / totalSteps) * 100), label);
+
+        // Run one model at a time for cleaner progress.
+        const res = await fetch('/api/bleu', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pairs: validPairs, models: [key] }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Feil');
+
+        const r = data.results[0];
+        allRuns[key].push(r);
+      }
+    }
+
+    const summary = buildSummary(allRuns, numRuns);
+    renderResults(summary, numRuns);
     loadModels();
-    $('run-status').textContent = 'Ferdig.';
+
+    // Auto-save.
+    if ($('auto-save').checked) {
+      const label = $('result-label').value.trim();
+      const saveBody = {
+        label: label || `${modelKeys.join(', ')} × ${numRuns} runs`,
+        corpus_name: $('corpus-name').value.trim() || '(unnamed)',
+        runs: numRuns,
+        models: modelKeys,
+        pairs_count: validPairs.length,
+        summary,
+        all_runs: allRuns,
+      };
+      const saveRes = await fetch('/api/results/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(saveBody),
+      });
+      const saved = await saveRes.json();
+      $('run-status').textContent = `Ferdig! Lagra som "${saved.saved}"`;
+    } else {
+      $('run-status').textContent = 'Ferdig!';
+    }
   } catch (err) {
     $('run-status').textContent = 'Feil: ' + err.message;
     $('corpus-results').innerHTML = '';
   } finally {
     $('run-btn').disabled = false;
+    $('progress-bar').hidden = true;
   }
 }
 
-function renderResults(results) {
-  // Corpus-level table.
-  const valid = results.filter((r) => !r.error);
-  const bestBleu = valid.length ? Math.max(...valid.map((r) => r.corpus.bleu)) : 0;
-  const bestChrf = valid.length ? Math.max(...valid.map((r) => r.corpus.chrf)) : 0;
-
-  const rows = results.map((r) => {
-    if (r.error) {
-      return `<tr><td>${r.model}</td><td colspan="4" class="error">${escape(r.error)}</td></tr>`;
+function buildSummary(allRuns, numRuns) {
+  // For each model, compute mean/min/max/stddev of corpus BLEU and chrF.
+  const summary = [];
+  for (const [key, runs] of Object.entries(allRuns)) {
+    const validRuns = runs.filter((r) => !r.error && r.corpus);
+    if (validRuns.length === 0) {
+      summary.push({ model: key, error: runs[0]?.error || 'Unknown error' });
+      continue;
     }
-    const bleuCls = r.corpus.bleu === bestBleu && bestBleu > 0 ? 'num best' : 'num';
-    const chrfCls = r.corpus.chrf === bestChrf && bestChrf > 0 ? 'num best' : 'num';
+
+    const bleus = validRuns.map((r) => r.corpus.bleu);
+    const chrfs = validRuns.map((r) => r.corpus.chrf);
+    const times = validRuns.map((r) => r.elapsed_ms);
+
+    const stats = (arr) => {
+      const n = arr.length;
+      const mean = arr.reduce((a, b) => a + b, 0) / n;
+      const min = Math.min(...arr);
+      const max = Math.max(...arr);
+      const variance = n > 1 ? arr.reduce((s, x) => s + (x - mean) ** 2, 0) / (n - 1) : 0;
+      const stddev = Math.sqrt(variance);
+      return { mean: +mean.toFixed(2), min: +min.toFixed(2), max: +max.toFixed(2), stddev: +stddev.toFixed(2), spread: +(max - min).toFixed(2) };
+    };
+
+    summary.push({
+      model: key,
+      hf_name: validRuns[0].hf_name,
+      runs: validRuns.length,
+      n: validRuns[0].corpus.n,
+      bleu: stats(bleus),
+      chrf: stats(chrfs),
+      time: stats(times),
+      // Keep the last run's segments for detail view.
+      segments: validRuns[validRuns.length - 1].segments,
+    });
+  }
+  return summary;
+}
+
+function renderResults(summary, numRuns) {
+  const valid = summary.filter((r) => !r.error);
+  const bestBleu = valid.length ? Math.max(...valid.map((r) => r.bleu.mean)) : 0;
+  const bestChrf = valid.length ? Math.max(...valid.map((r) => r.chrf.mean)) : 0;
+  const showVariance = numRuns > 1;
+
+  let thExtra = '';
+  let colCount = 5;
+  if (showVariance) {
+    thExtra = '<th>BLEU spread</th><th>chrF spread</th><th>σ BLEU</th>';
+    colCount = 8;
+  }
+
+  const rows = summary.map((r) => {
+    if (r.error) {
+      return `<tr><td>${r.model}</td><td colspan="${colCount - 1}" style="color: var(--bad)">${escape(r.error)}</td></tr>`;
+    }
+    const bleuCls = r.bleu.mean === bestBleu && bestBleu > 0 ? 'num best' : 'num';
+    const chrfCls = r.chrf.mean === bestChrf && bestChrf > 0 ? 'num best' : 'num';
+    let extra = '';
+    if (showVariance) {
+      extra = `
+        <td class="num">${r.bleu.spread}</td>
+        <td class="num">${r.chrf.spread}</td>
+        <td class="num">${r.bleu.stddev}</td>
+      `;
+    }
     return `
       <tr>
-        <td><strong>${r.model}</strong><br /><span class="muted">${r.hf_name}</span></td>
-        <td class="num">${r.corpus.n}</td>
-        <td class="${bleuCls}">${r.corpus.bleu}</td>
-        <td class="${chrfCls}">${r.corpus.chrf}</td>
-        <td class="num">${(r.elapsed_ms / 1000).toFixed(1)}s</td>
+        <td><strong>${r.model}</strong><br /><span class="muted">${r.hf_name || ''}</span></td>
+        <td class="num">${r.n}</td>
+        <td class="${bleuCls}">${r.bleu.mean}</td>
+        <td class="${chrfCls}">${r.chrf.mean}</td>
+        <td class="num">${(r.time.mean / 1000).toFixed(1)}s</td>
+        ${extra}
       </tr>
     `;
   }).join('');
@@ -203,25 +304,29 @@ function renderResults(results) {
   $('corpus-results').innerHTML = `
     <table class="corpus-table">
       <thead>
-        <tr><th>Modell</th><th>N</th><th>BLEU ↑</th><th>chrF ↑</th><th>Tid</th></tr>
+        <tr>
+          <th>Modell</th><th>N</th><th>BLEU ↑</th><th>chrF ↑</th><th>Tid</th>
+          ${thExtra}
+        </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
+    ${showVariance ? `
     <p class="muted" style="margin-top: 0.5rem">
-      BLEU og chrF måler begge kor nær ein maskin-oversettelse er ein menneskeleg referanse. chrF er meir forgjevande for morfologisk variasjon (ulike bøyingsformer) — viktig for nb↔nn.
-    </p>
+      <strong>Spread</strong> = max − min over ${numRuns} køyringar. <strong>σ</strong> = standardavvik.
+      Deterministiske modellar (beam search) gjev spread = 0. API-modellar med temperature &gt; 0 kan variere.
+    </p>` : ''}
   `;
 
-  // Per-segment details.
+  // Per-segment details (from last run).
   const seg = $('segment-results');
   seg.innerHTML = '';
-  for (const r of results) {
-    if (r.error) continue;
+  for (const r of summary) {
+    if (r.error || !r.segments) continue;
     const header = document.createElement('h3');
     header.textContent = r.model;
     header.style.margin = '1rem 0 0.5rem 0';
     seg.appendChild(header);
-
     for (const s of r.segments) {
       const block = document.createElement('div');
       block.className = 'segment-block';
@@ -266,6 +371,7 @@ async function loadSavedCorpora() {
           pairs = d.pairs.map((p) => ({ nb: p.nb || p[0] || '', nn: p.nn || p[1] || '' }));
           renderPairs();
           $('run-status').textContent = `Lasta inn "${c.name}" (${pairs.length} par)`;
+          $('corpus-name').value = c.name;
         }
         e.target.disabled = false;
         e.target.textContent = 'Last inn';
@@ -279,14 +385,8 @@ async function loadSavedCorpora() {
 
 async function saveCorpus() {
   const name = $('corpus-name').value.trim();
-  if (!name) {
-    $('run-status').textContent = 'Skriv inn eit namn for korpuset.';
-    return;
-  }
-  if (pairs.length === 0) {
-    $('run-status').textContent = 'Ingen par å lagre.';
-    return;
-  }
+  if (!name) { $('run-status').textContent = 'Skriv inn eit namn for korpuset.'; return; }
+  if (pairs.length === 0) { $('run-status').textContent = 'Ingen par å lagre.'; return; }
   const validPairs = pairs.filter((p) => p.nb.trim() && p.nn.trim());
   try {
     const res = await fetch('/api/corpora/save', {
@@ -296,28 +396,28 @@ async function saveCorpus() {
     });
     const d = await res.json();
     $('run-status').textContent = `Lagra "${d.saved}" (${d.pairs} par)`;
-    $('corpus-name').value = '';
     loadSavedCorpora();
   } catch (err) {
     $('run-status').textContent = 'Feil ved lagring: ' + err.message;
   }
 }
 
+// ── Event listeners ───────────────────────────────────────────
 $('run-btn').addEventListener('click', runEval);
-$('add-pair').addEventListener('click', () => {
-  pairs.push({ nb: '', nn: '' });
-  renderPairs();
-});
-$('clear-pairs').addEventListener('click', () => {
-  pairs = [];
-  renderPairs();
-});
+$('add-pair').addEventListener('click', () => { pairs.push({ nb: '', nn: '' }); renderPairs(); });
+$('clear-pairs').addEventListener('click', () => { pairs = []; renderPairs(); });
 $('wiki-search-btn').addEventListener('click', searchWiki);
-$('wiki-search').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') searchWiki();
-});
+$('wiki-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') searchWiki(); });
 $('tsv-load').addEventListener('click', loadTsv);
 $('save-corpus-btn').addEventListener('click', saveCorpus);
+$('select-all').addEventListener('click', () => {
+  models.forEach((m) => selected.add(m.key));
+  renderModels();
+});
+$('select-none').addEventListener('click', () => {
+  selected.clear();
+  renderModels();
+});
 
 loadModels();
 renderPairs();
