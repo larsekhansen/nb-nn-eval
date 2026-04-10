@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>nb-nn-eval · BLEU</title>
   <link rel="stylesheet" href="/ui/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -93,6 +94,16 @@
     <section id="results-section" class="card" hidden>
       <h2>Resultat</h2>
       <div id="corpus-results"></div>
+
+      <div class="chart-grid">
+        <div class="chart-box">
+          <canvas id="chart-scores"></canvas>
+        </div>
+        <div class="chart-box">
+          <canvas id="chart-time"></canvas>
+        </div>
+      </div>
+
       <details>
         <summary>Per-setning-detaljar</summary>
         <div id="segment-results"></div>

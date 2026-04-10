@@ -76,10 +76,23 @@ Things that would make the tool immediately more useful, roughly ordered by impa
 
 ### Evaluation quality
 
+**More metrics — different lenses on the same translation:**
+- [ ] **COMET score.** A neural metric (`Unbabel/wmt22-comet-da`) that uses a trained model to judge translation quality. Correlates much better with human judgement than BLEU/chrF. Adds a ~400 MB model but is the modern standard for MT evaluation. Should be added as a third column alongside BLEU/chrF.
+- [ ] **TER (Translation Edit Rate).** Measures the minimum number of edits (insertions, deletions, substitutions, shifts) needed to turn the model output into the reference. Lower is better. Directly answers "how much post-editing would a human need?" — which is the real question for a production translation service. Available via sacrebleu.
+- [ ] **BERTScore.** Uses contextual embeddings (BERT) to compare meaning rather than exact word matches. Two sentences can say the same thing with completely different words and BERTScore will catch it, while BLEU gives 0. Useful for nb→nn where valid nynorsk often uses different vocabulary than the reference.
+- [ ] **Multiple references.** sacrebleu supports it; the API handles it; the UI doesn't. Important for nb→nn because there are often 2-3 equally valid nynorsk translations of a bokmål sentence (e.g. "vi" vs "me", "ikkje" vs "ikkje" with different sentence structure). Single-reference BLEU penalises valid alternatives.
+
+**Sentence-level vs paragraph-level comparison:**
+- [ ] **Run the same corpus at two granularities.** Translate each pair both as isolated sentences AND as full paragraphs (concatenate 3-5 sentences as context). Show both scores side-by-side per model. This reveals:
+  - Which models benefit from context (paragraph score > sentence score)?
+  - Which models degrade with longer input (attention dilution)?
+  - Do some models produce more consistent terminology when given paragraph context?
+  - Is the *ranking* of models the same at both levels, or do some swap positions?
+  The UI should show a "Δ" column (paragraph BLEU − sentence BLEU) to make the difference immediately visible. A positive Δ means the model does better with context.
+
+**Qualitative analysis:**
 - [ ] **Per-feature error analysis.** Automatically flag common failure modes: wrong pronoun form, loanword pass-through, clausal restructuring. A diff viewer per segment would surface these fast.
-- [ ] **Multiple references.** sacrebleu supports it; the API handles it; the UI doesn't. Useful when there are several valid translations.
-- [ ] **COMET score.** A neural metric (`Unbabel/wmt22-comet-da`) that correlates much better with human judgement than BLEU/chrF. Adds a ~400 MB model but is the modern standard.
-- [ ] **Human rating UI.** A page where you're shown a pair of (reference, model output) and rate 1-5 on accuracy + fluency. Stash the ratings in a local SQLite and compute correlations with automatic metrics.
+- [ ] **Human rating UI.** A page where you're shown a pair of (reference, model output) and rate 1-5 on accuracy + fluency. Stash the ratings in a local SQLite and compute correlations with automatic metrics. This is the ground truth that all automatic metrics are trying to approximate.
 
 ### Quality-of-life
 

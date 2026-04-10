@@ -296,6 +296,9 @@ function renderResults(summary, numRuns) {
     </p>` : ''}
   `;
 
+  // Charts.
+  renderCharts(valid, showVariance);
+
   // Per-segment details (from last run).
   const seg = $('segment-results');
   seg.innerHTML = '';
@@ -317,6 +320,111 @@ function renderResults(summary, numRuns) {
       seg.appendChild(block);
     }
   }
+}
+
+// ── Charts ────────────────────────────────────────────────────
+let chartScores = null;
+let chartTime = null;
+
+function renderCharts(valid, showVariance) {
+  if (!valid.length || typeof Chart === 'undefined') return;
+
+  // Sort by BLEU descending for readability.
+  const sorted = [...valid].sort((a, b) => b.bleu.mean - a.bleu.mean);
+  const labels = sorted.map((r) => r.model);
+
+  // Destroy old charts.
+  if (chartScores) chartScores.destroy();
+  if (chartTime) chartTime.destroy();
+
+  // -- Score chart (BLEU + chrF, grouped bars with error bars if multi-run) --
+  const bleuData = sorted.map((r) => r.bleu.mean);
+  const chrfData = sorted.map((r) => r.chrf.mean);
+
+  const scoreDatasets = [
+    {
+      label: 'BLEU',
+      data: bleuData,
+      backgroundColor: 'rgba(30, 64, 175, 0.75)',
+      borderColor: 'rgba(30, 64, 175, 1)',
+      borderWidth: 1,
+    },
+    {
+      label: 'chrF',
+      data: chrfData,
+      backgroundColor: 'rgba(21, 128, 61, 0.55)',
+      borderColor: 'rgba(21, 128, 61, 1)',
+      borderWidth: 1,
+    },
+  ];
+
+  // Add min/max as error bars via floating bars if multi-run.
+  if (showVariance) {
+    scoreDatasets.push({
+      label: 'BLEU range (min–max)',
+      data: sorted.map((r) => [r.bleu.min, r.bleu.max]),
+      backgroundColor: 'rgba(30, 64, 175, 0.15)',
+      borderColor: 'rgba(30, 64, 175, 0.4)',
+      borderWidth: 1,
+      barPercentage: 0.3,
+    });
+  }
+
+  chartScores = new Chart($('chart-scores'), {
+    type: 'bar',
+    data: { labels, datasets: scoreDatasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      scales: {
+        x: { min: 0, max: 100, title: { display: true, text: 'Score (0–100)' } },
+      },
+      plugins: {
+        title: { display: true, text: 'Omsetjingskvalitet', font: { size: 14 } },
+        legend: { position: 'bottom' },
+      },
+    },
+  });
+
+  // -- Time chart (horizontal bars) --
+  const timeSorted = [...valid].sort((a, b) => a.time.mean - b.time.mean);
+  const timeLabels = timeSorted.map((r) => r.model);
+  const timeData = timeSorted.map((r) => +(r.time.mean / 1000).toFixed(1));
+
+  // Color gradient: fast=green, slow=amber/red.
+  const maxTime = Math.max(...timeData, 1);
+  const timeColors = timeData.map((t) => {
+    const ratio = t / maxTime;
+    if (ratio < 0.3) return 'rgba(21, 128, 61, 0.7)';
+    if (ratio < 0.6) return 'rgba(161, 98, 7, 0.7)';
+    return 'rgba(185, 28, 28, 0.7)';
+  });
+
+  chartTime = new Chart($('chart-time'), {
+    type: 'bar',
+    data: {
+      labels: timeLabels,
+      datasets: [{
+        label: 'Tid (sekund)',
+        data: timeData,
+        backgroundColor: timeColors,
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      scales: {
+        x: { title: { display: true, text: 'Sekund (lågare er betre)' } },
+      },
+      plugins: {
+        title: { display: true, text: 'Hastigheit', font: { size: 14 } },
+        legend: { display: false },
+      },
+    },
+  });
 }
 
 // ── Corpus save/load ──────────────────────────────────────────

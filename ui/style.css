@@ -391,6 +391,27 @@ button:disabled {
   margin: 0 0 0.5rem 0;
 }
 
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.chart-box {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 300px;
+}
+
+@media (max-width: 900px) {
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 700px) {
   .pair { grid-template-columns: 1fr; }
   .topbar { flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 1rem 1.5rem; }
