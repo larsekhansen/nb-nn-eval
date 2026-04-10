@@ -1,16 +1,16 @@
 """
 pere/nb-nn-translation adapter — T5-base fine-tuned for nb→nn.
 
-The model's own HF repo has broken config files (Git LFS pointers that
-never resolved). The fix: load the tokenizer from the BASE model
-`pere/norwegian-t5-base-NCC-fast` (which has a working tokenizer.json
-with 50103 tokens matching the model's embedding table) and the weights
-from `pere/nb-nn-translation`.
+The repo's spiece.model is wrong (mT5's 250100-token file instead of
+the model's actual 50003-token vocab). This is a known issue:
+  https://huggingface.co/pere/nb-nn-translation/discussions/1
 
-Quality is modest — the model was trained on the Norwegian Colossal
-Corpus and fine-tuned with Flax. The PyTorch conversion may have
-artifacts. Still worth including as it's the most-downloaded
-Norwegian-specific nb→nn model on HF.
+The fix: use the FAST tokenizer (use_fast=True, the default), which
+reads from tokenizer.json (correct 50003-token Unigram vocab) rather
+than the broken spiece.model. Do NOT load with use_fast=False.
+
+The most-downloaded Norwegian-specific nb→nn model on HF (~1500/month).
+Quality is good — proper nynorsk forms.
 """
 from __future__ import annotations
 
@@ -27,8 +27,9 @@ class PereNbNn(Model):
         self.display_name = "Pere nb-nn (T5-base)"
 
         t0 = time.time()
-        # Tokenizer from the base model — the one in nb-nn-translation is broken.
-        self.tokenizer = AutoTokenizer.from_pretrained("pere/norwegian-t5-base-NCC-fast")
+        # Must use use_fast=True (default) to get tokenizer.json, NOT spiece.model.
+        # See: https://huggingface.co/pere/nb-nn-translation/discussions/1
+        self.tokenizer = AutoTokenizer.from_pretrained("pere/nb-nn-translation")
         self.model = AutoModelForSeq2SeqLM.from_pretrained("pere/nb-nn-translation")
         self.model.eval()
         self.param_count = _format_params(self.model.num_parameters())
