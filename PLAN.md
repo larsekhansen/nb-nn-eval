@@ -140,6 +140,13 @@ The current repo is ~80% of the way there:
 - [ ] Direction-agnostic API: take `source_lang`, `target_lang`, route to the appropriate model adapter. Today the server assumes nb→nn.
 - [ ] Language detection for auto-routing (`fasttext` or similar small model).
 - [ ] Glossary / do-not-translate list support. Critical for government content where agency names, official titles, and statutes must not be auto-translated.
+- [ ] **Post-translation consistency checker.** Scan a translated document and flag:
+  - **Term inconsistencies** — same bokmål term translated differently in different places (e.g. "virksomhet" → "verksemd" in §1 but "bedrift" in §4). List each term with all its translations and where they appear.
+  - **Context inconsistencies** — pronoun/gender mismatches introduced by sentence-level translation (e.g. a masculine pronoun referring to a feminine noun from a previous sentence).
+  - **Untranslated fragments** — bokmål words or phrases that slipped through unchanged.
+  - **Style drift** — mixing conservative and radical nynorsk forms in the same document.
+  UX: like a spell-checker. The editor steps through flagged issues one by one, accepting or correcting each. Could be a standalone page or integrated into CMS post-publish workflow.
+- [ ] **Paragraph-level translation mode.** Current setup translates sentence-by-sentence. Paragraph mode would feed whole paragraphs to the model, preserving cross-sentence context (pronoun resolution, term consistency). Trade-off: longer input means slower inference and may hit model token limits.
 - [ ] Batch API endpoint with async job queue (for big publishing workflows).
 - [ ] Prometheus metrics, health checks, readiness probes.
 - [ ] A minimal admin UI (reuse what we have, extended) so editors can submit texts and grab translations without any API integration.
@@ -189,3 +196,4 @@ Just as important to write down. These are things that sound tempting but should
 Rough notes on what was done when, so future context is not lost.
 
 - **2026-04-09** — Initial commit. Rescued from a throwaway demo page in `ki.norge.no`. Established model registry pattern, built Playground + BLEU UI, added Wikipedia fetcher. Found that `pere/nb-nn-translation` on HF is broken (config files stuck as unresolved LFS pointers); switched to NLLB-200 as the working default. Helsinki Marian and navjordj T5 added as comparison baselines. Tested end-to-end with a 3-pair synthetic corpus — everything functional.
+- **2026-04-10** — Fixed pere/nb-nn-translation (the spiece.model is wrong but tokenizer.json is correct — must use `use_fast=True`). Added 7 new models: NorMistral 11B translate + 7B instruct, Apertium rule-based, OpenAI/Anthropic API adapters. Added multi-run evaluation with variance stats, result persistence, results comparison page. Built 5 pre-populated corpora (223 pairs total): hand-curated gold standard + 4 Wikipedia sets. Auto-detect MPS/CUDA/CPU for GPU acceleration. Published to GitHub as `larsekhansen/nb-nn-eval`.
