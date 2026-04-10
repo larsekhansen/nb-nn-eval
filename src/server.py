@@ -52,6 +52,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._serve_static(name)
         if path == "/api/models":
             return self._reply(200, list_models())
+        if path == "/api/device":
+            from src.models.device import device_name
+            return self._reply(200, {"device": device_name()})
         if path == "/api/wiki/search":
             q = (query.get("q") or [""])[0]
             if not q:
@@ -364,10 +367,12 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    from src.models.device import device_name
     server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     print(f"nb-nn-eval listening on http://127.0.0.1:{PORT}")
     print(f"  Playground:  http://127.0.0.1:{PORT}/")
     print(f"  BLEU eval:   http://127.0.0.1:{PORT}/eval")
+    print(f"  Device:      {device_name()}")
     print(f"  Models:      {', '.join(REGISTRY.keys())}")
     print("Press Ctrl+C to stop.")
     try:

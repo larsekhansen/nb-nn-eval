@@ -16,20 +16,23 @@ class MADLAD(Model):
     def __init__(self, hf_name: str, target_lang: str = "nn"):
         from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
+        from .device import get_device
+        self.device = get_device()
         self.hf_name = hf_name
         self.display_name = f"MADLAD ({hf_name.split('/')[-1]})"
         self.target_lang = target_lang
 
         t0 = time.time()
         self.tokenizer = AutoTokenizer.from_pretrained(hf_name)
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(hf_name)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(hf_name).to(self.device)
         self.model.eval()
         self.param_count = _format_params(self.model.num_parameters())
-        print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params", flush=True)
+        print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params, device={self.device}", flush=True)
 
     def translate(self, text: str) -> str:
         prefixed = f"<2{self.target_lang}> {text}"
         inputs = self.tokenizer(prefixed, return_tensors="pt", truncation=True, max_length=512)
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
         output = self.model.generate(
             **inputs,
             max_length=512,

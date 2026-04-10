@@ -17,13 +17,16 @@ class NLLB(Model):
         self.hf_name = hf_name
         self.display_name = f"NLLB ({hf_name.split('/')[-1]})"
 
+        from .device import get_device
+        self.device = get_device()
+
         t0 = time.time()
         self.tokenizer = AutoTokenizer.from_pretrained(hf_name, src_lang="nob_Latn")
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(hf_name)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(hf_name).to(self.device)
         self.model.eval()
         self.tgt_token_id = self.tokenizer.convert_tokens_to_ids("nno_Latn")
         self.param_count = _format_params(self.model.num_parameters())
-        print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params", flush=True)
+        print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params, device={self.device}", flush=True)
 
     def translate(self, text: str) -> str:
         inputs = self.tokenizer(
@@ -32,6 +35,7 @@ class NLLB(Model):
             truncation=True,
             max_length=512,
         )
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
         output = self.model.generate(
             **inputs,
             forced_bos_token_id=self.tgt_token_id,

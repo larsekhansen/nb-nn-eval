@@ -103,7 +103,7 @@ def _check_available(key: str) -> tuple:
 
 # Model display metadata (shown before loading).
 _META: Dict[str, dict] = {
-    "pere-nb-nn":             {"display_name": "Pere nb-nn (T5-base)", "group": "Norsk-spesifikke", "size": "~1 GB", "speed": "~0.5s/setning"},
+    "pere-nb-nn":             {"display_name": "pere/nb-nn-translation", "group": "Norsk-spesifikke", "size": "~1 GB", "speed": "~0.5s/setning"},
     "navjordj-t5":            {"display_name": "navjordj T5 nb-nn", "group": "Norsk-spesifikke", "size": "~2.4 GB", "speed": "~1s/setning"},
     "apertium":               {"display_name": "Apertium (regelbasert)", "group": "Norsk-spesifikke", "size": "Docker", "speed": "~0.1s/setning"},
     "normistral-translate":   {"display_name": "NorMistral 11B translate", "group": "Norske LLM-ar", "size": "~22 GB", "speed": "~30-60s/setning", "warning": "Stor modell — treg på CPU"},

@@ -25,9 +25,11 @@ class NorMistral(Model):
     def __init__(self, hf_name: str, display: str | None = None):
         from transformers import AutoTokenizer, AutoModelForCausalLM
         import torch
+        from .device import get_device
 
         self.hf_name = hf_name
         self.display_name = display or f"NorMistral ({hf_name.split('/')[-1]})"
+        self.device = get_device()
 
         t0 = time.time()
         self.tokenizer = AutoTokenizer.from_pretrained(hf_name)
@@ -35,7 +37,7 @@ class NorMistral(Model):
             hf_name,
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
-        )
+        ).to(self.device)
         self.model.eval()
         self.param_count = _format_params(self.model.num_parameters())
 
@@ -53,7 +55,8 @@ class NorMistral(Model):
         )
 
         inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
-        input_len = inputs.input_ids.shape[1]
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        input_len = inputs["input_ids"].shape[1]
 
         output = self.model.generate(
             **inputs,

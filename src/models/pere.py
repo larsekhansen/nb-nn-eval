@@ -24,16 +24,19 @@ class PereNbNn(Model):
         from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
         self.hf_name = "pere/nb-nn-translation"
-        self.display_name = "Pere nb-nn (T5-base)"
+        self.display_name = "pere/nb-nn-translation"
+
+        from .device import get_device
+        self.device = get_device()
 
         t0 = time.time()
         # Must use use_fast=True (default) to get tokenizer.json, NOT spiece.model.
         # See: https://huggingface.co/pere/nb-nn-translation/discussions/1
         self.tokenizer = AutoTokenizer.from_pretrained("pere/nb-nn-translation")
-        self.model = AutoModelForSeq2SeqLM.from_pretrained("pere/nb-nn-translation")
+        self.model = AutoModelForSeq2SeqLM.from_pretrained("pere/nb-nn-translation").to(self.device)
         self.model.eval()
         self.param_count = _format_params(self.model.num_parameters())
-        print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params", flush=True)
+        print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params, device={self.device}", flush=True)
 
     def translate(self, text: str) -> str:
         inputs = self.tokenizer(
@@ -42,6 +45,7 @@ class PereNbNn(Model):
             truncation=True,
             max_length=512,
         )
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
         output = self.model.generate(
             **inputs,
             max_length=512,
