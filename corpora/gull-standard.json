@@ -1,0 +1,127 @@
+{
+  "name": "gull-standard",
+  "description": "Handkuraterte parallelle setningar av høg kvalitet. Dekkjer offentleg forvaltning, teknologi, daglegspråk, juss og akademia. Kvar setning er skriven av menneske på begge målformer.",
+  "source": "Manuelt kuratert",
+  "pairs": [
+    {
+      "nb": "Digitaliseringsdirektoratet skal hjelpe offentlige virksomheter med å ta i bruk nye digitale løsninger.",
+      "nn": "Digitaliseringsdirektoratet skal hjelpe offentlege verksemder med å ta i bruk nye digitale løysingar."
+    },
+    {
+      "nb": "Regjeringen ønsker å legge til rette for ansvarlig bruk av kunstig intelligens i hele samfunnet.",
+      "nn": "Regjeringa ønskjer å leggje til rette for ansvarleg bruk av kunstig intelligens i heile samfunnet."
+    },
+    {
+      "nb": "Kommunene har ansvar for å tilby gode tjenester til innbyggerne sine.",
+      "nn": "Kommunane har ansvar for å tilby gode tenester til innbyggjarane sine."
+    },
+    {
+      "nb": "Den nye loven trer i kraft fra første januar neste år.",
+      "nn": "Den nye lova tek til å gjelde frå første januar neste år."
+    },
+    {
+      "nb": "Alle elever har rett til et trygt og godt skolemiljø.",
+      "nn": "Alle elevar har rett til eit trygt og godt skulemiljø."
+    },
+    {
+      "nb": "Forskerne fant at klimaendringene påvirker fjordene langs hele kysten.",
+      "nn": "Forskarane fann at klimaendringane påverkar fjordane langs heile kysten."
+    },
+    {
+      "nb": "Det er viktig at offentlige dokumenter er tilgjengelige på begge målformer.",
+      "nn": "Det er viktig at offentlege dokument er tilgjengelege på begge målformene."
+    },
+    {
+      "nb": "Sykehusene i regionen samarbeider om å utvikle bedre behandlingstilbud.",
+      "nn": "Sjukehusa i regionen samarbeider om å utvikle betre behandlingstilbod."
+    },
+    {
+      "nb": "Statsbudsjettet legger opp til økte bevilgninger til forskning og utvikling.",
+      "nn": "Statsbudsjettet legg opp til auka løyvingar til forsking og utvikling."
+    },
+    {
+      "nb": "Personvernforordningen stiller strenge krav til behandling av personopplysninger.",
+      "nn": "Personvernforordninga stiller strenge krav til behandling av personopplysningar."
+    },
+    {
+      "nb": "Brukerne bør oppdatere programvaren jevnlig for å sikre seg mot sårbarheter.",
+      "nn": "Brukarane bør oppdatere programvara jamleg for å sikre seg mot sårbarheiter."
+    },
+    {
+      "nb": "Universitetene tilbyr stadig flere kurs innen maskinlæring og datavitenskap.",
+      "nn": "Universiteta tilbyr stadig fleire kurs innan maskinlæring og datavitskap."
+    },
+    {
+      "nb": "Fylkeskommunen har vedtatt en ny strategi for kollektivtransport.",
+      "nn": "Fylkeskommunen har vedteke ein ny strategi for kollektivtransport."
+    },
+    {
+      "nb": "Næringslivet etterspør flere arbeidstakere med kompetanse innen teknologi.",
+      "nn": "Næringslivet etterspør fleire arbeidstakarar med kompetanse innan teknologi."
+    },
+    {
+      "nb": "Søknaden må sendes inn innen fristen for å bli behandlet.",
+      "nn": "Søknaden må sendast inn innan fristen for å bli handsama."
+    },
+    {
+      "nb": "Bibliotekene spiller en viktig rolle for å fremme leselyst blant barn og unge.",
+      "nn": "Biblioteka spelar ei viktig rolle for å fremje leselyst blant barn og unge."
+    },
+    {
+      "nb": "De frivillige organisasjonene gjør en uvurderlig innsats i lokalsamfunnene.",
+      "nn": "Dei frivillige organisasjonane gjer ein uvurderleg innsats i lokalsamfunna."
+    },
+    {
+      "nb": "Norges vassdrags- og energidirektorat overvåker vannkraftproduksjonen i landet.",
+      "nn": "Noregs vassdrags- og energidirektorat overvakar vasskraftproduksjonen i landet."
+    },
+    {
+      "nb": "Det nye datasystemet gjør det enklere for innbyggerne å søke om byggetillatelse.",
+      "nn": "Det nye datasystemet gjer det enklare for innbyggjarane å søkje om byggjeløyve."
+    },
+    {
+      "nb": "Rapporten viser at stadig flere eldre bruker nettbaserte helsetjenester.",
+      "nn": "Rapporten viser at stadig fleire eldre brukar nettbaserte helsetenester."
+    },
+    {
+      "nb": "Mattilsynet gjennomfører regelmessige kontroller av næringsmiddelindustrien.",
+      "nn": "Mattilsynet gjennomfører regelmessige kontrollar av næringsmiddelindustrien."
+    },
+    {
+      "nb": "Barnehagene skal legge til rette for lek, læring og danning.",
+      "nn": "Barnehagane skal leggje til rette for leik, læring og danning."
+    },
+    {
+      "nb": "Stortinget vedtok enstemmig den nye likestillingsloven.",
+      "nn": "Stortinget vedtok samrøystes den nye likestillingslova."
+    },
+    {
+      "nb": "Pasientene har rett til å se sin egen journal og be om innsyn.",
+      "nn": "Pasientane har rett til å sjå sin eigen journal og be om innsyn."
+    },
+    {
+      "nb": "Mange bedrifter opplever at det er vanskelig å rekruttere kvalifiserte fagfolk.",
+      "nn": "Mange bedrifter opplever at det er vanskeleg å rekruttere kvalifiserte fagfolk."
+    },
+    {
+      "nb": "Den offentlige debatten om kunstig intelligens bør bygge på kunnskap og fakta.",
+      "nn": "Den offentlege debatten om kunstig intelligens bør byggje på kunnskap og fakta."
+    },
+    {
+      "nb": "Veiledningen gir praktiske råd om hvordan virksomheter kan gjennomføre risikovurderinger.",
+      "nn": "Rettleiinga gjev praktiske råd om korleis verksemder kan gjennomføre risikovurderingar."
+    },
+    {
+      "nb": "Klimatilpasning handler om å forberede samfunnet på endringer i vær og klima.",
+      "nn": "Klimatilpassing handlar om å førebu samfunnet på endringar i vêr og klima."
+    },
+    {
+      "nb": "Direktoratet for forvaltning og økonomistyring har utarbeidet nye retningslinjer.",
+      "nn": "Direktoratet for forvaltning og økonomistyring har utarbeidd nye retningslinjer."
+    },
+    {
+      "nb": "Ungdommer bør lære om kildekritikk og hvordan de kan skille mellom pålitelige og upålitelige kilder.",
+      "nn": "Ungdommar bør lære om kjeldekritikk og korleis dei kan skilje mellom pålitelege og upålitelege kjelder."
+    }
+  ]
+}
