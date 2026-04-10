@@ -16,7 +16,7 @@ from .marian import Marian
 from .navjordj import NavjordjT5
 from .madlad import MADLAD
 from .pere import PereNbNn
-from .normistral import NorMistral
+from .normistral import NorMistralTranslate, NorMistralInstruct
 from .apertium import Apertium
 from .llm_api import OpenAIModel, AnthropicModel
 
@@ -37,13 +37,13 @@ REGISTRY: Dict[str, Callable[[], Model]] = {
 
     # ── Norwegian LLMs (generative, prompt-based) ────────────────
     # NorMistral-11b-translate — UiO, fine-tuned for translation.
-    # Best on nynorsk grammar per Språkrådet 2025. ~22GB, slow on CPU.
-    "normistral-translate": lambda: NorMistral(
+    # Best on nynorsk grammar per Språkrådet 2025. ~22GB.
+    "normistral-translate": lambda: NorMistralTranslate(
         "norallm/normistral-11b-translate",
         display="NorMistral 11B translate",
     ),
     # NorMistral-7b-instruct — smaller, faster for iterating.
-    "normistral-7b": lambda: NorMistral(
+    "normistral-7b": lambda: NorMistralInstruct(
         "norallm/normistral-7b-warm-instruct",
         display="NorMistral 7B instruct",
     ),

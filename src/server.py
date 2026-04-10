@@ -35,6 +35,19 @@ UI_DIR = os.path.join(ROOT, "ui")
 CORPORA_DIR = os.path.join(ROOT, "corpora")
 RESULTS_DIR = os.path.join(ROOT, "results")
 
+# Ring buffer of recent log entries (kept in memory, not persisted).
+_LOG_BUFFER: list = []
+_LOG_MAX = 500
+
+
+def _log(msg: str):
+    ts = time.strftime("%H:%M:%S")
+    entry = f"[{ts}] {msg}"
+    _LOG_BUFFER.append(entry)
+    if len(_LOG_BUFFER) > _LOG_MAX:
+        _LOG_BUFFER.pop(0)
+    sys.stderr.write(entry + "\n")
+
 
 class Handler(BaseHTTPRequestHandler):
     # ── Routing ──────────────────────────────────────────────────
@@ -55,6 +68,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/device":
             from src.models.device import device_name
             return self._reply(200, {"device": device_name()})
+        if path == "/api/logs":
+            n = int((query.get("n") or ["100"])[0])
+            return self._reply(200, {"logs": _LOG_BUFFER[-n:]})
         if path == "/api/wiki/search":
             q = (query.get("q") or [""])[0]
             if not q:
@@ -132,14 +148,17 @@ class Handler(BaseHTTPRequestHandler):
         text = body.get("text", "")
         if not key or not text:
             return self._reply(400, {"error": "Missing model or text"})
+        _log(f"translate: model={key}, input={len(text)} chars")
         m = get_model(key)
         t0 = time.time()
         translation = m.translate(text)
+        ms = int((time.time() - t0) * 1000)
+        _log(f"translate: model={key}, output={len(translation)} chars, {ms}ms")
         return self._reply(200, {
             "model": key,
             "hf_name": m.hf_name,
             "translation": translation,
-            "ms": int((time.time() - t0) * 1000),
+            "ms": ms,
         })
 
     def _handle_translate_many(self, body: dict):
@@ -177,25 +196,32 @@ class Handler(BaseHTTPRequestHandler):
         if not pairs or not keys:
             return self._reply(400, {"error": "Need pairs and models"})
 
+        _log(f"bleu: {len(keys)} model(s) × {len(pairs)} pairs")
         results = []
         for key in keys:
             try:
+                _log(f"bleu: loading model {key}")
                 m = get_model(key)
             except Exception as e:
+                _log(f"bleu: FAILED to load {key}: {e}")
                 results.append({"model": key, "error": str(e)})
                 continue
 
             per_segment = []
             hyps, refs = [], []
             t0 = time.time()
-            for pair in pairs:
+            for i, pair in enumerate(pairs):
                 nb = (pair.get("nb") or "").strip()
                 nn = (pair.get("nn") or "").strip()
                 if not nb or not nn:
                     continue
                 try:
+                    t1 = time.time()
                     hyp = m.translate(nb)
+                    seg_ms = int((time.time() - t1) * 1000)
+                    _log(f"bleu: {key} seg {i+1}/{len(pairs)}: {seg_ms}ms, in={len(nb)}c out={len(hyp)}c")
                 except Exception as e:
+                    _log(f"bleu: {key} seg {i+1}/{len(pairs)}: ERROR {e}")
                     per_segment.append({"error": str(e), "nb": nb, "nn": nn})
                     continue
                 scores = bleu_mod.sentence_scores(hyp, nn)
