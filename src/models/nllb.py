@@ -24,11 +24,15 @@ class NLLB(Model):
         self.tokenizer = AutoTokenizer.from_pretrained(hf_name, src_lang="nob_Latn")
         self.model = AutoModelForSeq2SeqLM.from_pretrained(hf_name).to(self.device)
         self.model.eval()
-        self.tgt_token_id = self.tokenizer.convert_tokens_to_ids("nno_Latn")
+        self.tgt_nn = self.tokenizer.convert_tokens_to_ids("nno_Latn")
+        self.tgt_nb = self.tokenizer.convert_tokens_to_ids("nob_Latn")
         self.param_count = _format_params(self.model.num_parameters())
         print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params, device={self.device}", flush=True)
 
-    def translate(self, text: str) -> str:
+    def translate(self, text: str, direction: str = "nb-nn") -> str:
+        src = "nob_Latn" if direction == "nb-nn" else "nno_Latn"
+        tgt_id = self.tgt_nn if direction == "nb-nn" else self.tgt_nb
+        self.tokenizer.src_lang = src
         inputs = self.tokenizer(
             text,
             return_tensors="pt",
@@ -38,7 +42,7 @@ class NLLB(Model):
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
         output = self.model.generate(
             **inputs,
-            forced_bos_token_id=self.tgt_token_id,
+            forced_bos_token_id=tgt_id,
             max_length=512,
             num_beams=4,
             early_stopping=True,

@@ -24,8 +24,16 @@
     </section>
 
     <section class="card">
-      <h2>Input (bokmål)</h2>
-      <textarea id="input" rows="8" placeholder="Lim inn bokmål-tekst her…">Kunstig intelligens er i ferd med å forandre måten vi arbeider på i offentlig sektor. Digitaliseringsdirektoratet ønsker å hjelpe statlige og kommunale virksomheter med å ta i bruk KI på en trygg og ansvarlig måte.</textarea>
+      <div class="row" style="margin-bottom: 0.75rem">
+        <button id="dir-toggle" class="direction-toggle">
+          <span id="dir-from">Bokmål</span>
+          <span class="dir-arrow">→</span>
+          <span id="dir-to">Nynorsk</span>
+        </button>
+        <span class="muted" id="dir-hint">Klikk for å byte retning</span>
+      </div>
+      <h2 id="input-label">Input (bokmål)</h2>
+      <textarea id="input" rows="8" placeholder="Lim inn tekst her…">Kunstig intelligens er i ferd med å forandre måten vi arbeider på i offentlig sektor. Digitaliseringsdirektoratet ønsker å hjelpe statlige og kommunale virksomheter med å ta i bruk KI på en trygg og ansvarlig måte.</textarea>
       <div class="row">
         <button id="translate-btn" class="primary">Oversett</button>
         <button id="clear-btn">Tøm</button>
@@ -34,7 +42,7 @@
     </section>
 
     <section id="results-section" class="card" hidden>
-      <h2>Resultat (nynorsk)</h2>
+      <h2 id="output-label">Resultat (nynorsk)</h2>
       <div id="results"></div>
     </section>
 

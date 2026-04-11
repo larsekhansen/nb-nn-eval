@@ -47,18 +47,17 @@ class OpenAIModel(Model):
             )
         print(f"  OpenAI {model_id} ready (API key loaded)", flush=True)
 
-    def translate(self, text: str) -> str:
+    def translate(self, text: str, direction: str = "nb-nn") -> str:
+        if direction == "nb-nn":
+            system = ("Du er en profesjonell oversetter fra norsk bokmål til nynorsk. "
+                      "Oversett teksten nøyaktig. Ikkje legg til forklaringar, berre returner den omsette teksten.")
+        else:
+            system = ("Du er en profesjonell oversetter fra nynorsk til bokmål. "
+                      "Oversett teksten nøyaktig. Ikke legg til forklaringer, bare returner den oversatte teksten.")
         body = json.dumps({
             "model": self.model_id,
             "messages": [
-                {
-                    "role": "system",
-                    "content": (
-                        "Du er en profesjonell oversetter fra norsk bokmål til nynorsk. "
-                        "Oversett teksten nøyaktig. Ikkje legg til forklaringar, "
-                        "berre returner den omsette teksten."
-                    ),
-                },
+                {"role": "system", "content": system},
                 {"role": "user", "content": text},
             ],
             "temperature": 0,
@@ -93,15 +92,17 @@ class AnthropicModel(Model):
             )
         print(f"  Anthropic {model_id} ready (API key loaded)", flush=True)
 
-    def translate(self, text: str) -> str:
+    def translate(self, text: str, direction: str = "nb-nn") -> str:
+        if direction == "nb-nn":
+            system = ("Du er ein profesjonell omsetjar frå norsk bokmål til nynorsk. "
+                      "Oversett teksten nøyaktig. Ikkje legg til forklaringar, berre returner den omsette teksten.")
+        else:
+            system = ("Du er en profesjonell oversetter fra nynorsk til bokmål. "
+                      "Oversett teksten nøyaktig. Ikke legg til forklaringer, bare returner den oversatte teksten.")
         body = json.dumps({
             "model": self.model_id,
             "max_tokens": 1024,
-            "system": (
-                "Du er ein profesjonell omsetjar frå norsk bokmål til nynorsk. "
-                "Oversett teksten nøyaktig. Ikkje legg til forklaringar, "
-                "berre returner den omsette teksten."
-            ),
+            "system": system,
             "messages": [
                 {"role": "user", "content": text},
             ],

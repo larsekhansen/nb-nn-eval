@@ -29,8 +29,9 @@ class Marian(Model):
         self.param_count = _format_params(self.model.num_parameters())
         print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params, device={self.device}", flush=True)
 
-    def translate(self, text: str) -> str:
-        prefixed = f"{self.target_token} {text}" if self.target_token else text
+    def translate(self, text: str, direction: str = "nb-nn") -> str:
+        token = ">>nno<<" if direction == "nb-nn" else ">>nob<<"
+        prefixed = f"{token} {text}"
         inputs = self.tokenizer(prefixed, return_tensors="pt", truncation=True, max_length=512)
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
         output = self.model.generate(

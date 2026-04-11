@@ -146,12 +146,13 @@ class Handler(BaseHTTPRequestHandler):
     def _handle_translate(self, body: dict):
         key = body.get("model")
         text = body.get("text", "")
+        direction = body.get("direction", "nb-nn")
         if not key or not text:
             return self._reply(400, {"error": "Missing model or text"})
-        _log(f"translate: model={key}, input={len(text)} chars")
+        _log(f"translate: model={key}, direction={direction}, input={len(text)} chars")
         m = get_model(key)
         t0 = time.time()
-        translation = m.translate(text)
+        translation = m.translate(text, direction=direction)
         ms = int((time.time() - t0) * 1000)
         _log(f"translate: model={key}, output={len(translation)} chars, {ms}ms")
         return self._reply(200, {
@@ -164,6 +165,7 @@ class Handler(BaseHTTPRequestHandler):
     def _handle_translate_many(self, body: dict):
         keys = body.get("models") or []
         text = body.get("text", "")
+        direction = body.get("direction", "nb-nn")
         if not keys or not text:
             return self._reply(400, {"error": "Missing models or text"})
         results = []
@@ -171,7 +173,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 m = get_model(key)
                 t0 = time.time()
-                translation = m.translate(text)
+                translation = m.translate(text, direction=direction)
                 results.append({
                     "model": key,
                     "hf_name": m.hf_name,

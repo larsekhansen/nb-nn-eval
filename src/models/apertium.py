@@ -61,9 +61,10 @@ class Apertium(Model):
                 f"Feil: {e}"
             ) from e
 
-    def translate(self, text: str) -> str:
+    def translate(self, text: str, direction: str = "nb-nn") -> str:
+        pair = "nob|nno" if direction == "nb-nn" else "nno|nob"
         params = urllib.parse.urlencode({
-            "langpair": "nob|nno",
+            "langpair": pair,
             "q": text,
         })
         url = f"{self.base_url}/translate?{params}"

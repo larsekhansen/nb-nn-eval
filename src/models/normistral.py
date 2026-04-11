@@ -46,10 +46,10 @@ class NorMistralTranslate(Model):
 
         print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params, device={self.device}", flush=True)
 
-    def translate(self, text: str) -> str:
-        # The translate model uses a chat template with system="nynorsk".
+    def translate(self, text: str, direction: str = "nb-nn") -> str:
+        target = "nynorsk" if direction == "nb-nn" else "bokmål"
         messages = [
-            {"role": "system", "content": "nynorsk"},
+            {"role": "system", "content": target},
             {"role": "user", "content": text},
         ]
         input_tokens = self.tokenizer.apply_chat_template(
@@ -94,9 +94,13 @@ class NorMistralInstruct(Model):
 
         print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params, device={self.device}", flush=True)
 
-    def translate(self, text: str) -> str:
+    def translate(self, text: str, direction: str = "nb-nn") -> str:
+        if direction == "nb-nn":
+            prompt = f"Oversett følgjande tekst frå bokmål til nynorsk. Returner berre omsetjinga, ingen forklaringar.\n\n{text}"
+        else:
+            prompt = f"Oversett følgjande tekst frå nynorsk til bokmål. Returner berre oversettelsen, ingen forklaringer.\n\n{text}"
         messages = [
-            {"role": "user", "content": f"Oversett følgjande tekst frå bokmål til nynorsk. Returner berre omsetjinga, ingen forklaringar.\n\n{text}"},
+            {"role": "user", "content": prompt},
         ]
         input_tokens = self.tokenizer.apply_chat_template(
             messages, return_tensors="pt", add_generation_prompt=True,

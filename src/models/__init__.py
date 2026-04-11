@@ -103,8 +103,8 @@ def _check_available(key: str) -> tuple:
 
 # Model display metadata (shown before loading).
 _META: Dict[str, dict] = {
-    "pere-nb-nn":             {"display_name": "pere/nb-nn-translation", "group": "Norsk-spesifikke", "size": "~1 GB", "speed": "~0.5s/setning"},
-    "navjordj-t5":            {"display_name": "navjordj T5 nb-nn", "group": "Norsk-spesifikke", "size": "~2.4 GB", "speed": "~1s/setning"},
+    "pere-nb-nn":             {"display_name": "pere/nb-nn-translation", "group": "Norsk-spesifikke", "size": "~1 GB", "speed": "~0.5s/setning", "supports_reverse": False},
+    "navjordj-t5":            {"display_name": "navjordj T5 nb-nn", "group": "Norsk-spesifikke", "size": "~2.4 GB", "speed": "~1s/setning", "supports_reverse": False},
     "apertium":               {"display_name": "Apertium (regelbasert)", "group": "Norsk-spesifikke", "size": "Docker", "speed": "~0.1s/setning"},
     "normistral-translate":   {"display_name": "NorMistral 11B translate", "group": "Norske LLM-ar", "size": "~22 GB", "speed": "~30-60s/setning", "warning": "Stor modell — treg på CPU"},
     "normistral-7b":          {"display_name": "NorMistral 7B instruct", "group": "Norske LLM-ar", "size": "~14 GB", "speed": "~15-30s/setning", "warning": "Stor modell — treg på CPU"},
@@ -135,6 +135,7 @@ def list_models() -> List[dict]:
             "group": meta.get("group", ""),
             "hf_name": m.hf_name if m else None,
             "param_count": m.param_count if m else None,
+            "supports_reverse": m.supports_reverse if m else meta.get("supports_reverse", True),
             "size": meta.get("size", ""),
             "speed": meta.get("speed", ""),
             "warning": meta.get("warning", ""),

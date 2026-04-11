@@ -4,14 +4,41 @@ const $ = (id) => document.getElementById(id);
 
 let models = [];
 let selected = new Set();
+let direction = 'nb-nn';  // or 'nn-nb'
 
 async function loadModels() {
   const res = await fetch('/api/models');
   models = await res.json();
   renderModels();
+  updateDirectionUI();
 }
 
 // renderModels() is provided by models-ui.js
+
+function updateDirectionUI() {
+  const isNbNn = direction === 'nb-nn';
+  $('dir-from').textContent = isNbNn ? 'Bokmål' : 'Nynorsk';
+  $('dir-to').textContent = isNbNn ? 'Nynorsk' : 'Bokmål';
+  $('input-label').textContent = isNbNn ? 'Input (bokmål)' : 'Input (nynorsk)';
+  $('output-label').textContent = isNbNn ? 'Resultat (nynorsk)' : 'Resultat (bokmål)';
+  $('input').placeholder = isNbNn ? 'Lim inn bokmål-tekst her…' : 'Lim inn nynorsk-tekst her…';
+
+  // Gray out models that don't support reverse.
+  if (!isNbNn) {
+    for (const m of models) {
+      if (!m.supports_reverse && selected.has(m.key)) {
+        selected.delete(m.key);
+      }
+    }
+    renderModels();
+  }
+}
+
+function toggleDirection() {
+  direction = direction === 'nb-nn' ? 'nn-nb' : 'nb-nn';
+  updateDirectionUI();
+  $('dir-hint').textContent = '';
+}
 
 async function translate() {
   const text = $('input').value.trim();
@@ -24,14 +51,25 @@ async function translate() {
     return;
   }
 
+  // Filter out models that don't support the current direction.
+  const validKeys = Array.from(selected).filter((key) => {
+    const m = models.find((x) => x.key === key);
+    return direction === 'nb-nn' || m?.supports_reverse !== false;
+  });
+
+  if (validKeys.length === 0) {
+    $('status').textContent = 'Ingen av dei valde modellane støttar nn→nb.';
+    return;
+  }
+
   $('translate-btn').disabled = true;
-  $('status').textContent = 'Oversett… (første gongs bruk av ein modell kan ta litt tid medan han blir lasta)';
+  $('status').textContent = 'Oversett…';
   $('results-section').hidden = false;
   $('results').innerHTML = '';
 
   const wrap = $('results');
   const slots = {};
-  for (const key of selected) {
+  for (const key of validKeys) {
     const row = document.createElement('div');
     row.className = 'result-row';
     const m = models.find((x) => x.key === key);
@@ -48,7 +86,7 @@ async function translate() {
     const res = await fetch('/api/translate-many', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, models: Array.from(selected) }),
+      body: JSON.stringify({ text, models: validKeys, direction }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Feil');
@@ -64,7 +102,6 @@ async function translate() {
         row.querySelector('.output').textContent = r.translation;
       }
     }
-    // Refresh model list to reflect loaded state.
     loadModels();
     $('status').textContent = 'Ferdig.';
   } catch (err) {
@@ -117,6 +154,7 @@ async function searchWiki() {
   }
 }
 
+$('dir-toggle').addEventListener('click', toggleDirection);
 $('translate-btn').addEventListener('click', translate);
 $('clear-btn').addEventListener('click', () => {
   $('input').value = '';

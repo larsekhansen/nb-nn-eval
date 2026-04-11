@@ -379,6 +379,30 @@ button:disabled {
   font-weight: 500;
 }
 
+.direction-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--accent);
+  border-radius: 99px;
+  background: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--accent);
+}
+
+.direction-toggle:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.dir-arrow {
+  font-size: 1.1rem;
+}
+
 .corpus-picker {
   display: flex;
   flex-wrap: wrap;

@@ -38,7 +38,11 @@ class PereNbNn(Model):
         self.param_count = _format_params(self.model.num_parameters())
         print(f"  loaded in {time.time() - t0:.1f}s, {self.param_count} params, device={self.device}", flush=True)
 
-    def translate(self, text: str) -> str:
+    supports_reverse = False
+
+    def translate(self, text: str, direction: str = "nb-nn") -> str:
+        if direction != "nb-nn":
+            raise ValueError("pere/nb-nn-translation støttar berre nb→nn")
         inputs = self.tokenizer(
             text,
             return_tensors="pt",
